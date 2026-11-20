@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Читалка — СилаВолія</title>
+<meta name="description" content="СилаВолія — казки про дракона-таксу Фіна, мальтипу Краша і пуделицю Луну.">
+<link rel="icon" href="assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pangolin&display=swap&subset=cyrillic">
+<link rel="stylesheet" href="assets/css/site.css?v=20261120122907">
+<link rel="stylesheet" href="assets/css/saga3.css?v=20261120122907">
+<script src="assets/js/data.js?v=20261120122907" defer></script>
+<script src="assets/js/app.js?v=20261120122907" defer></script>
+</head>
+<body class="reader" data-page="read">
+<header class="top reader-top">
+  <div class="wrap">
+    <a class="icon-btn" href="library.html" aria-label="До бібліотеки" title="До бібліотеки">✕</a>
+    <div class="reader-title" id="title"></div>
+    <div class="tools">
+      <button class="icon-btn" id="smaller" aria-label="Менший шрифт" title="Менший шрифт">A−</button>
+      <button class="icon-btn" id="bigger" aria-label="Більший шрифт" title="Більший шрифт">A+</button>
+      <button class="icon-btn" id="focus" aria-pressed="false" aria-label="Нічне читання без відволікань" title="Нічне читання без відволікань">🌙</button>
+      <button class="icon-btn" id="speak" aria-pressed="false" aria-label="Читати вголос" title="Читати вголос" hidden>🔊</button>
+    </div>
+  </div>
+  <div class="rainbow-bar"></div>
+</header>
+<main class="book" id="book" aria-live="polite"></main>
+<nav class="pager" aria-label="Сторінки">
+  <div class="wrap">
+    <button class="btn ghost" id="prev" aria-label="Попередня сторінка">◀</button>
+    <div class="progress" aria-hidden="true"><i></i></div>
+    <span class="count" id="count"></span>
+    <button class="btn" id="next" aria-label="Наступна сторінка">▶</button>
+  </div>
+</nav>
+</body>
+</html>

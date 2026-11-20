@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEURO BEADS — Збирач Намиста</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="neuro-ocean">
+    <header>
+        <div class="header-content">
+            <div class="logo">NEURO <span>BEADS</span></div>
+            <button id="sound-btn" class="sound-toggle" aria-label="Перемкнути звук">🔇</button>
+        </div>
+    </header>
+
+    <main class="mobile-wrapper">
+        
+        <div class="mode-switcher">
+            <button class="mode-btn active" onclick="setMode('training')">Тренування</button>
+            <button class="mode-btn" onclick="setMode('game')">Гра (Намисто)</button>
+        </div>
+
+        <div id="necklace-panel" class="necklace-panel hidden">
+            <div class="necklace-container" id="necklace-container">
+                </div>
+            <div class="progress-info">
+                <span>Прогрес перлини: <span id="current-points">0</span>/12 балів</span>
+            </div>
+        </div>
+
+        <section class="daily-mission">
+            <div class="mission-box">
+                <div id="victory-pearl" class="pearl-container hidden">
+                    <div class="pearl"></div>
+                    <div class="pearl-flash"></div>
+                </div>
+
+                <div id="difficulty-wrapper" class="difficulty-selector">
+                    <span>Розрядність:</span>
+                    <select id="digit-select">
+                        <option value="2">2 (Десятки)</option>
+                        <option value="3">3 (Сотні)</option>
+                        <option value="4" selected>4 (Тисячі)</option>
+                        <option value="5">5 (10 Тисяч)</option>
+                        <option value="6">6 (100 Тисяч)</option>
+                        <option value="7">7 (Мільйони)</option>
+                    </select>
+                </div>
+
+                <div id="target-number" class="target-display">Ціль: ????</div>
+                <div id="mission-status" class="status-text">Оберіть режим</div>
+
+                <div class="controls-panel">
+                    <button onclick="generateMission()" class="mission-btn" id="action-btn">Старт</button>
+                    <button onclick="resetAbacus()" class="reset-btn">Скинути</button>
+                </div>
+            </div>
+        </section>
+
+        <div class="abacus-system">
+            <div class="abacus-frame">
+                <div id="abacus" class="abacus"></div>
+            </div>
+            <div class="energy-panel">
+                <div id="total-value" class="neuro-value">0</div>
+            </div>
+        </div>
+    </main>
+
+    <div id="grand-victory" class="grand-victory hidden">
+        <div class="victory-content">
+            <h1>🏆 НАМИСТО ЗІБРАНО! 🏆</h1>
+            <p>Ви стали Повелителем Абакуса!</p>
+            <button onclick="restartGame()" class="mission-btn">Почати знову</button>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop>
+        <source src="ocean-theme.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="victory-sound">
+        <source src="magic-chime.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

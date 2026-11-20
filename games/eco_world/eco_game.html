@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ФарбоСвіт: Еко-Система (Pro)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #1a1a2e;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none; /* Блокує зум на мобільних */
+        }
+
+        /* --- UI Elements --- */
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #top-ui {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 10px 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none; /* Пропускає кліки крізь панель */
+        }
+
+        .quest-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+            max-width: 50%;
+        }
+        .quest-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        .quest-goal { font-size: 14px; font-weight: bold; margin-top: 2px; }
+
+        .stats-box {
+            display: flex; flex-direction: column; gap: 5px;
+            pointer-events: auto;
+        }
+        .stat-row { display: flex; align-items: center; gap: 8px; font-size: 18px; }
+        .bar-bg { width: 100px; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); }
+        .bar-fill { height: 100%; width: 50%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* --- CANVAS --- */
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: pointer;
+        }
+
+        /* --- CONTROLS --- */
+        #controls {
+            position: absolute; bottom: 20px;
+            display: flex; gap: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            z-index: 20;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .tool-btn {
+            width: 60px; height: 60px;
+            border: none; border-radius: 50%;
+            font-size: 28px; cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .tool-btn:active { transform: scale(0.9); }
+        .tool-btn.active {
+            background: white; color: #333;
+            box-shadow: 0 0 15px white;
+            transform: translateY(-10px);
+        }
+        .tool-label {
+            position: absolute; bottom: -20px; 
+            font-size: 10px; font-weight: bold; 
+            color: white; opacity: 0; transition: 0.3s;
+            text-shadow: 0 2px 4px black;
+        }
+        .tool-btn.active .tool-label { opacity: 1; bottom: -25px; }
+
+        /* --- OVERLAYS --- */
+        #start-screen, #win-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 100; text-align: center;
+            padding: 20px; box-sizing: border-box;
+        }
+        h1 { font-size: 40px; margin: 0 0 10px; background: linear-gradient(45deg, #00f260, #0575E6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p { margin-bottom: 30px; color: #ccc; max-width: 400px; line-height: 1.5; }
+        
+        .big-btn {
+            padding: 15px 40px; font-size: 18px; font-weight: bold;
+            border: none; border-radius: 50px;
+            background: linear-gradient(45deg, #00f260, #0575E6);
+            color: white; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0, 242, 96, 0.3);
+            transition: transform 0.2s;
+        }
+        .big-btn:active { transform: scale(0.95); }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="top-ui">
+            <div class="quest-box">
+                <div class="quest-title" id="lvl-title">Рівень 1</div>
+                <div class="quest-goal" id="lvl-goal">Завантаження...</div>
+            </div>
+            <div class="stats-box">
+                <div class="stat-row">
+                    ☀️ <div class="bar-bg"><div id="sun-bar" class="bar-fill" style="background: linear-gradient(90deg, #f12711, #f5af19);"></div></div>
+                </div>
+                <div class="stat-row">
+                    💧 <div class="bar-bg"><div id="water-bar" class="bar-fill" style="background: linear-gradient(90deg, #00c6ff, #0072ff);"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <button class="tool-btn active" onclick="setTool('sun')">☀️<span class="tool-label">Сонце</span></button>
+            <button class="tool-btn" onclick="setTool('water')">🌧️<span class="tool-label">Дощ</span></button>
+            <button class="tool-btn" onclick="setTool('plant')">🌱<span class="tool-label">Саджати</span></button>
+            <button class="tool-btn" onclick="setTool('animal')">🐇<span class="tool-label">Фауна</span></button>
+            <button class="tool-btn" onclick="setTool('clean')">🧹<span class="tool-label">Прибрати</span></button>
+        </div>
+
+        <div id="start-screen">
+            <h1>ФАРБО СВІТ</h1>
+            <p>Стань охоронцем природи. Керуй погодою, вирощуй ліси та рятуй тварин.</p>
+            <button class="big-btn" onclick="startGame()">ПОЧАТИ ГРУ</button>
+        </div>
+
+        <div id="win-screen" style="display: none;">
+            <h1>РІВЕНЬ ПРОЙДЕНО!</h1>
+            <p id="win-msg">Природа вдячна тобі.</p>
+            <button class="big-btn" onclick="nextLevel()">НАСТУПНИЙ РІВЕНЬ</button>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ENGINE (Синтез звуків без файлів) ---
+        const AudioFX = {
+            ctx: null,
+            init: function() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            },
+            playTone: function(freq, type, duration, vol=0.1) {
+                if(!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            playNoise: function(duration, vol=0.2) {
+                if(!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = this.ctx.createGain();
+                gain.gain.value = vol;
+                
+                // Lowpass filter для звуку дощу/вітру
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 800;
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            },
+            // Presets
+            soundRain: function() { this.playNoise(0.2, 0.1); },
+            soundPlant: function() { this.playTone(300, 'sine', 0.1, 0.2); this.playTone(400, 'sine', 0.2, 0.1); },
+            soundSun: function() { this.playTone(100, 'triangle', 0.5, 0.05); },
+            soundWin: function() { 
+                [440, 554, 659, 880].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.5, 0.2), i*100));
+            },
+            soundClean: function() { this.playTone(150, 'sawtooth', 0.1, 0.1); },
+            soundRabbit: function() { this.playTone(800, 'square', 0.1, 0.05); }
+        };
+
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        // Налаштування Canvas
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- LEVELS ---
+        const levels = [
+            {
+                id: 1,
+                title: "Рівень 1: Пробудження",
+                desc: "Посади 5 дерев. Слідкуй за балансом сонця і води!",
+                goal: (s) => countType(s, 'tree') >= 5,
+                text: "Вирости 5 дерев: {val}/5"
+            },
+            {
+                id: 2,
+                title: "Рівень 2: Життя",
+                desc: "Створи ліс та засели 3 зайців.",
+                goal: (s) => countType(s, 'rabbit') >= 3,
+                text: "Засели 3 зайців: {val}/3"
+            },
+            {
+                id: 3,
+                title: "Рівень 3: Еколог",
+                desc: "Прибери 5 куп сміття, не знищивши ліс.",
+                goal: (s) => s.cleaned >= 5 && countType(s, 'tree') >= 3,
+                text: "Прибери сміття: {val}/5"
+            }
+        ];
+
+        // --- STATE ---
+        let state = {
+            levelIdx: 0,
+            sun: 50,
+            water: 50,
+            objects: [], // trees, rabbits, trash
+            particles: [], // rain
+            tool: 'sun',
+            cleaned: 0,
+            playing: false,
+            time: 0
+        };
+
+        // --- PARTICLES SYSTEM (Дощ) ---
+        class RainDrop {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * -height;
+                this.speed = Math.random() * 10 + 10;
+                this.len = Math.random() * 20 + 10;
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > height) {
+                    this.y = Math.random() * -50;
+                    this.x = Math.random() * width;
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.len);
+                ctx.stroke();
+            }
+        }
+
+        // --- ENTITIES ---
+        class Entity {
+            constructor(type, x, y) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.scale = 0.1; // Анімація появи
+                this.status = 'alive';
+                this.dir = Math.random() > 0.5 ? 1 : -1;
+                this.hopY = 0; // Для стрибків зайця
+            }
+            update() {
+                // Анімація росту
+                if (this.scale < 1) this.scale += 0.05;
+
+                if (this.type === 'rabbit') {
+                    // Логіка стрибків
+                    if (this.status === 'alive') {
+                        this.x += this.dir * 1.5;
+                        this.hopY = Math.abs(Math.sin(Date.now() / 100)) * -15; // Стрибок
+                        
+                        // Відштовхування від стін
+                        if (this.x > width - 30) this.dir = -1;
+                        if (this.x < 30) this.dir = 1;
+                    }
+                }
+                
+                // Смерть від поганих умов
+                let isBad = state.sun > 85 || state.water > 85;
+                if (this.type === 'tree' && isBad) this.status = 'dead';
+                if (this.type === 'rabbit' && (countType(state, 'tree') < 1 || isBad)) this.status = 'gone';
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y + this.hopY);
+                ctx.scale(this.scale, this.scale);
+                
+                // Тінь
+                ctx.fillStyle = "rgba(0,0,0,0.2)";
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 20, 5, 0, 0, Math.PI*2);
+                ctx.fill();
+
+                // Малювання емодзі по центру
+                ctx.font = "40px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "bottom";
+                
+                let char = "";
+                if (this.type === 'tree') char = this.status === 'alive' ? "🌳" : "🍂";
+                if (this.type === 'rabbit') char = "🐇";
+                if (this.type === 'trash') char = "🗑️";
+
+                // Ефект тремтіння якщо втікає
+                if (this.status === 'gone') {
+                    ctx.globalAlpha = 0.5;
+                    char = "💨";
+                }
+
+                ctx.fillText(char, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function countType(s, t) {
+            return s.objects.filter(o => o.type === t && o.status === 'alive').length;
+        }
+
+        // --- INPUT HANDLING ---
+        function handleInput(x, y) {
+            if (!state.playing) return;
+
+            // Координати землі (нижня третина екрану)
+            const groundLevel = height * 0.75; 
+
+            if (state.tool === 'sun') {
+                state.sun = Math.min(state.sun + 5, 100);
+                state.water = Math.max(state.water - 2, 0);
+                AudioFX.soundSun();
+            } else if (state.tool === 'water') {
+                state.water = Math.min(state.water + 5, 100);
+                state.sun = Math.max(state.sun - 2, 0);
+                // Звук дощу генерується в циклі оновлення
+            } else if (y > height * 0.6) { // Тільки на землі
+                if (state.tool === 'plant') {
+                    state.objects.push(new Entity('tree', x, groundLevel + Math.random()*50));
+                    AudioFX.soundPlant();
+                } else if (state.tool === 'animal') {
+                    if (countType(state, 'tree') >= 2) {
+                        state.objects.push(new Entity('rabbit', x, groundLevel + Math.random()*50));
+                        AudioFX.soundRabbit();
+                    } else {
+                        showFloatingText(x, y, "Треба ліс!");
+                    }
+                } else if (state.tool === 'clean') {
+                    // Пошук сміття поруч
+                    let hit = false;
+                    state.objects = state.objects.filter(o => {
+                        let dist = Math.hypot(o.x - x, o.y - y);
+                        if (o.type === 'trash' && dist < 60) {
+                            state.cleaned++;
+                            hit = true;
+                            return false;
+                        }
+                        return true;
+                    });
+                    if(hit) AudioFX.soundClean();
+                }
+            }
+        }
+
+        // Миша
+        canvas.addEventListener('mousedown', e => handleInput(e.clientX, e.clientY));
+        // Тачскрін
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            handleInput(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+
+        function setTool(t) {
+            state.tool = t;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- GAME LOOP ---
+        function update() {
+            if (!state.playing) return;
+            state.time++;
+
+            // Natural decay
+            if (state.time % 20 === 0) {
+                if (state.sun > 10) state.sun -= 0.2;
+                if (state.water > 10) state.water -= 0.2;
+            }
+
+            // Дощ (створення крапель)
+            if (state.water > 60) {
+                if(Math.random() > 0.5) state.particles.push(new RainDrop());
+                if(state.time % 10 === 0) AudioFX.soundRain(); // Звук дощу
+            }
+            state.particles.forEach(p => p.update());
+            state.particles = state.particles.filter(p => p.y < height + 50);
+
+            // Генерація сміття (Рівень 3)
+            if (levels[state.levelIdx].id === 3 && Math.random() > 0.99 && countType(state, 'trash') < 10) {
+                const groundLevel = height * 0.75;
+                state.objects.push(new Entity('trash', Math.random()*width, groundLevel + Math.random()*50));
+            }
+
+            // Оновлення об'єктів
+            state.objects.forEach(o => o.update());
+            state.objects = state.objects.filter(o => o.status !== 'gone');
+
+            // UI Update
+            document.getElementById('sun-bar').style.width = state.sun + "%";
+            document.getElementById('water-bar').style.width = state.water + "%";
+            
+            // Check Win
+            let lvl = levels[state.levelIdx];
+            let val = 0;
+            if (lvl.id === 1) val = countType(state, 'tree');
+            if (lvl.id === 2) val = countType(state, 'rabbit');
+            if (lvl.id === 3) val = state.cleaned;
+            
+            document.getElementById('lvl-goal').innerText = lvl.text.replace("{val}", val);
+
+            if (lvl.goal(state)) {
+                winLevel();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Небо (Градієнт)
+            let skyTop = state.sun > 70 ? "#4facfe" : "#1e3c72";
+            if (state.sun > 90) skyTop = "#ff9a9e"; // Спека
+            let skyBot = state.water > 70 ? "#a8edea" : "#2a5298";
+            if (state.water > 80) skyBot = "#333"; // Шторм
+
+            let grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, skyTop);
+            grad.addColorStop(1, skyBot);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Сонце / Місяць
+            if (state.sun > 20) {
+                let sunY = height * 0.1 + (100 - state.sun);
+                ctx.beginPath();
+                let sunGrad = ctx.createRadialGradient(width-100, sunY, 10, width-100, sunY, 60);
+                sunGrad.addColorStop(0, "rgba(255, 255, 200, 1)");
+                sunGrad.addColorStop(0.5, "rgba(255, 200, 50, 0.5)");
+                sunGrad.addColorStop(1, "rgba(255, 200, 50, 0)");
+                ctx.fillStyle = sunGrad;
+                ctx.arc(width-100, sunY, 80, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // 3. Задні плани (Гори/Пагорби)
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.beginPath();
+            ctx.ellipse(width/2, height*0.75, width*0.8, height*0.2, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // 4. Земля
+            let groundColor = state.water > 80 ? "#2c3e50" : "#27ae60"; // Темніє від води
+            if (state.sun > 90) groundColor = "#e67e22"; // Сохне від сонця
+            ctx.fillStyle = groundColor;
+            ctx.fillRect(0, height*0.7, width, height*0.3);
+
+            // 5. Об'єкти (Сортуємо по Y для правильного перекриття)
+            state.objects.sort((a,b) => a.y - b.y);
+            state.objects.forEach(o => o.draw());
+
+            // 6. Частинки дощу (Передній план)
+            state.particles.forEach(p => p.draw());
+
+            requestAnimationFrame(draw);
+        }
+
+        // --- GAME FLOW ---
+        function startGame() {
+            AudioFX.init();
+            document.getElementById('start-screen').style.display = 'none';
+            state.playing = true;
+            loadLevel(0);
+            
+            // Запуск циклів
+            setInterval(update, 50); // Logic loop
+            draw(); // Render loop
+        }
+
+        function loadLevel(idx) {
+            state.levelIdx = idx;
+            state.objects = [];
+            state.particles = [];
+            state.sun = 50;
+            state.water = 50;
+            state.cleaned = 0;
+            
+            document.getElementById('lvl-title').innerText = levels[idx].title;
+            document.getElementById('lvl-goal').innerText = levels[idx].desc;
+        }
+
+        function winLevel() {
+            state.playing = false;
+            AudioFX.soundWin();
+            document.getElementById('win-screen').style.display = 'flex';
+        }
+
+        function nextLevel() {
+            let next = state.levelIdx + 1;
+            if (next >= levels.length) {
+                alert("Вітаємо! Ви пройшли гру!");
+                next = 0;
+            }
+            document.getElementById('win-screen').style.display = 'none';
+            state.playing = true;
+            loadLevel(next);
+        }
+        
+        // Спливаючий текст для помилок
+        function showFloatingText(x, y, text) {
+            ctx.save();
+            ctx.font = "20px Montserrat";
+            ctx.fillStyle = "white";
+            ctx.fillText(text, x, y - 50);
+            ctx.restore();
+            // Спрощено для прикладу (в draw loop це було б складніше)
+        }
+
+    </script>
+</body>
+</html>

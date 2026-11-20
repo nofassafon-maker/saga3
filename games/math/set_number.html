@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Володар Кристалів</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #2c3e50, #000000);
+            --gold: #ffd700;
+            --crystal-slot: rgba(255, 255, 255, 0.1);
+            --slot-filled: linear-gradient(45deg, #00c6ff, #0072ff);
+            --btn-bg: linear-gradient(to bottom, #444, #222);
+            --btn-border: #666;
+        }
+
+        body {
+            font-family: 'Verdana', sans-serif;
+            background: var(--bg-gradient);
+            color: #fff;
+            text-align: center;
+            height: 100vh;
+            height: 100dvh; 
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* --- ВЕРХНЯ ПАНЕЛЬ --- */
+        .top-bar {
+            padding: 10px;
+            background: rgba(0,0,0,0.6);
+            border-bottom: 2px solid #5d4037;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        select {
+            background: #fff;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+
+        /* Кнопка музики */
+        .music-btn {
+            background: var(--btn-bg);
+            border: 2px solid #8d6e63;
+            color: #fff;
+            font-size: 20px;
+            width: 40px; height: 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .music-btn.active { border-color: #00ff44; color: #00ff44; box-shadow: 0 0 10px #00ff44; }
+
+        /* --- ІГРОВА ЗОНА --- */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 5px 0;
+        }
+
+        h1 { margin: 0; font-size: clamp(1rem, 3vh, 1.2rem); color: #aaa; }
+        
+        .target-number {
+            font-size: clamp(3rem, 10vh, 5rem);
+            font-weight: bold;
+            color: var(--gold);
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            line-height: 1;
+        }
+
+        .cauldron {
+            width: clamp(80px, 15vh, 120px); 
+            height: clamp(80px, 15vh, 120px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 4px solid #00d2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(24px, 4vh, 36px);
+            font-weight: bold;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .cauldron.active { box-shadow: 0 0 30px #00d2ff; background: rgba(0, 210, 255, 0.2); }
+        .cauldron.error { border-color: #ff5252; animation: shake 0.4s; background: rgba(255, 82, 82, 0.2); }
+
+        .progress-container {
+            min-height: 50px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 8px;
+            width: 95%;
+            overflow-y: auto;
+            max-height: 15vh;
+        }
+
+        .pair-slot {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed #666;
+            border-radius: 6px;
+            padding: 4px 8px;
+            min-width: 50px;
+            color: #888;
+            font-size: clamp(12px, 3vw, 14px);
+            white-space: nowrap;
+        }
+
+        .pair-slot.found {
+            background: var(--slot-filled);
+            border: 1px solid #fff;
+            color: #fff;
+            font-weight: bold;
+            animation: popIn 0.5s;
+        }
+
+        /* --- КЛАВІАТУРА --- */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: clamp(5px, 1vh, 10px);
+            width: 95%;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        .num-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--btn-border);
+            color: #fff;
+            font-size: clamp(20px, 5vw, 28px);
+            border-radius: 10px;
+            height: clamp(45px, 8vh, 60px); 
+            cursor: pointer;
+            box-shadow: 0 3px 0 #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        
+        .num-btn:active { transform: translateY(3px); box-shadow: none; }
+        .clear-btn { background: #b71c1c; border-color: #e53935; }
+
+        /* --- СКРИНЯ --- */
+        .chest-area {
+            background: rgba(0,0,0,0.8);
+            width: 100%;
+            padding: 10px 0;
+            border-top: 4px solid #8d6e63;
+            flex-shrink: 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
+        }
+        .chest-title { font-size: 11px; color: #8d6e63; text-transform: uppercase; margin-bottom: 5px; }
+        
+        .crystals-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 0 10px;
+        }
+
+        .crystal-slot {
+            width: clamp(25px, 7vw, 35px); 
+            height: clamp(25px, 7vw, 35px);
+            background: var(--crystal-slot);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(14px, 5vw, 20px);
+            border: 1px solid #444;
+        }
+        .crystal-slot.filled {
+            box-shadow: 0 0 8px currentColor;
+            animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @media (max-height: 550px) {
+            h1 { display: none; }
+            .game-area { padding-top: 5px; }
+            .target-number { font-size: 3rem; }
+            .cauldron { width: 60px; height: 60px; margin: 5px auto; }
+            .progress-container { min-height: 40px; }
+            .num-btn { height: 40px; }
+            .chest-area { padding: 5px 0; }
+        }
+
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+        @keyframes popIn { 0%{transform:scale(0)} 80%{transform:scale(1.2)} 100%{transform:scale(1)} }
+        @keyframes dropIn { 0%{transform:translateY(-50px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+
+        .win-modal {
+            display: none;
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .win-content { text-align: center; color: var(--gold); }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="top-bar">
+        <button class="music-btn" id="music-toggle" onclick="toggleMusic()">🔇</button>
+
+        <select id="difficulty" onchange="resetGame()">
+            <option value="easy">⚡ Одна пара (Тренування)</option>
+            <option value="hard">💎 Всі пари (Збір кристалів)</option>
+        </select>
+    </div>
+
+    <div class="game-area">
+        <h1>Склад числа:</h1>
+        <div class="target-number" id="target">?</div>
+
+        <div class="cauldron" id="cauldron-display">0</div>
+
+        <div class="progress-container" id="progress-slots"></div>
+
+        <div class="keypad">
+            <button class="num-btn" onclick="addNum(1)">1</button>
+            <button class="num-btn" onclick="addNum(2)">2</button>
+            <button class="num-btn" onclick="addNum(3)">3</button>
+            <button class="num-btn" onclick="addNum(4)">4</button>
+            <button class="num-btn" onclick="addNum(5)">5</button>
+            <button class="num-btn clear-btn" onclick="clearInput()">C</button>
+            <button class="num-btn" onclick="addNum(6)">6</button>
+            <button class="num-btn" onclick="addNum(7)">7</button>
+            <button class="num-btn" onclick="addNum(8)">8</button>
+            <button class="num-btn" onclick="addNum(9)">9</button>
+        </div>
+    </div>
+
+    <div class="chest-area">
+        <div class="chest-title">Скриня кристалів (Потрібно 10)</div>
+        <div class="crystals-grid" id="crystal-chest"></div>
+    </div>
+
+    <div class="win-modal" id="win-screen">
+        <div class="win-content">
+            <h1 style="font-size: clamp(40px, 15vw, 80px); margin:0;">🏆</h1>
+            <h2>ТИ ПЕРЕМІГ!</h2>
+            <p>Скриня повна кристалів!</p>
+            <button class="num-btn" style="padding: 10px 30px; margin-top: 20px; font-size: 18px;" onclick="resetGame()">Грати ще раз</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. АУДІО (ЕФЕКТИ + MP3) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        
+        // Фонова музика (MP3)
+        const bgMusicEl = document.getElementById('bg-music');
+        bgMusicEl.volume = 0.3; // Гучність музики 30% (щоб не заглушала ефекти)
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Керування музикою
+        function toggleMusic() {
+            const btn = document.getElementById('music-toggle');
+            
+            if (bgMusicEl.paused) {
+                bgMusicEl.play().then(() => {
+                    btn.innerText = "🔊";
+                    btn.classList.add('active');
+                }).catch(e => {
+                    alert("Помилка! Перевір, чи є файл 'music.mp3' у папці з грою.");
+                    console.error(e);
+                });
+            } else {
+                bgMusicEl.pause();
+                btn.innerText = "🔇";
+                btn.classList.remove('active');
+            }
+        }
+
+        // Генератор SFX (залишаємо, щоб не качати зайві файли)
+        function playTone(freq, type, duration, startTime = 0, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime + startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + startTime);
+            osc.stop(audioCtx.currentTime + startTime + duration);
+        }
+
+        function sfxCorrect() {
+            initAudio();
+            playTone(880, 'sine', 0.3, 0);       // A5
+            playTone(1108, 'sine', 0.6, 0.1);    // C#6
+        }
+
+        function sfxWrong() {
+            initAudio();
+            playTone(150, 'sawtooth', 0.4, 0, 0.15);
+            playTone(140, 'sawtooth', 0.4, 0.1, 0.15);
+        }
+
+        function sfxCrystal() {
+            initAudio();
+            playTone(1318, 'sine', 0.5, 0);    // E6
+            playTone(1661, 'sine', 0.5, 0.1);  // G#6
+            playTone(1975, 'sine', 0.8, 0.2);  // B6
+        }
+
+        function sfxWin() {
+            initAudio();
+            playTone(523, 'triangle', 0.5, 0);   
+            playTone(659, 'triangle', 0.5, 0.2); 
+            playTone(783, 'triangle', 0.5, 0.4); 
+            playTone(1046, 'triangle', 2.0, 0.6, 0.3); 
+        }
+
+        // --- 2. ЛОГІКА ГРИ ---
+        let targetNum = 0;
+        let currentInput = []; 
+        let foundPairs = []; 
+        let crystals = 0;
+        const maxCrystals = 10;
+        
+        const targetEl = document.getElementById('target');
+        const cauldronEl = document.getElementById('cauldron-display');
+        const progressEl = document.getElementById('progress-slots');
+        const chestEl = document.getElementById('crystal-chest');
+        const difficultySel = document.getElementById('difficulty');
+        const winScreen = document.getElementById('win-screen');
+
+        function initChest() {
+            chestEl.innerHTML = '';
+            for(let i=0; i<maxCrystals; i++) {
+                let d = document.createElement('div');
+                d.className = 'crystal-slot';
+                d.id = 'c-slot-'+i;
+                chestEl.appendChild(d);
+            }
+        }
+
+        function resetGame() {
+            crystals = 0;
+            initChest();
+            winScreen.style.display = 'none';
+            newRound();
+        }
+
+        function newRound() {
+            clearInput();
+            targetNum = Math.floor(Math.random() * 7) + 4; 
+            targetEl.innerText = targetNum;
+            foundPairs = [];
+            renderProgress();
+        }
+
+        function addNum(n) {
+            initAudio(); 
+            if (currentInput.length >= 2) {
+                shake();
+                return;
+            }
+            currentInput.push(n);
+            updateDisplay();
+
+            if (currentInput.length === 2) {
+                setTimeout(checkResult, 300);
+            }
+        }
+
+        function clearInput() {
+            currentInput = [];
+            updateDisplay();
+            cauldronEl.classList.remove('active', 'error');
+        }
+
+        function updateDisplay() {
+            if (currentInput.length === 0) {
+                cauldronEl.innerText = "0";
+            } else {
+                cauldronEl.innerText = currentInput.join("+");
+            }
+        }
+
+        function checkResult() {
+            const sum = currentInput[0] + currentInput[1];
+            const difficulty = difficultySel.value;
+
+            if (sum === targetNum) {
+                successEffect();
+                let pairSorted = [...currentInput].sort((a,b) => a-b);
+                let pairStr = pairSorted.join('+');
+                let isDuplicate = foundPairs.includes(pairStr);
+
+                if (difficulty === 'easy') {
+                    sfxCorrect();
+                    setTimeout(newRound, 1000);
+                } else {
+                    if (!isDuplicate) {
+                        sfxCorrect();
+                        foundPairs.push(pairStr);
+                        renderProgress();
+                        
+                        let totalPairsNeeded = Math.floor(targetNum / 2);
+                        if (foundPairs.length === totalPairsNeeded) {
+                            giveCrystal();
+                            setTimeout(newRound, 1500);
+                        } else {
+                            setTimeout(clearInput, 500);
+                        }
+                    } else {
+                        cauldronEl.innerText = "Вже є!";
+                        setTimeout(clearInput, 500);
+                    }
+                }
+            } else {
+                errorEffect();
+                sfxWrong();
+            }
+        }
+
+        function renderProgress() {
+            progressEl.innerHTML = '';
+            const difficulty = difficultySel.value;
+
+            if (difficulty === 'easy') {
+                progressEl.innerHTML = '<div style="color:#888; font-size:12px;">Знайди будь-яку пару</div>';
+                return;
+            }
+
+            const totalPairs = Math.floor(targetNum / 2);
+
+            for (let i = 0; i < totalPairs; i++) {
+                let slot = document.createElement('div');
+                if (foundPairs[i]) {
+                    slot.className = 'pair-slot found';
+                    slot.innerText = foundPairs[i];
+                } else {
+                    slot.className = 'pair-slot';
+                    slot.innerText = "? + ?";
+                }
+                progressEl.appendChild(slot);
+            }
+        }
+
+        function successEffect() {
+            cauldronEl.classList.add('active');
+        }
+
+        function errorEffect() {
+            cauldronEl.classList.add('error');
+            setTimeout(clearInput, 500);
+        }
+
+        function shake() {
+            cauldronEl.style.animation = 'shake 0.3s';
+            setTimeout(() => cauldronEl.style.animation = '', 300);
+        }
+
+        function giveCrystal() {
+            if (crystals < maxCrystals) {
+                sfxCrystal(); 
+
+                const slot = document.getElementById('c-slot-' + crystals);
+                slot.innerHTML = getCrystalIcon(targetNum);
+                slot.style.color = getCrystalColor(targetNum);
+                slot.classList.add('filled');
+                crystals++;
+
+                if (crystals === maxCrystals) {
+                    setTimeout(() => {
+                        sfxWin(); 
+                        winScreen.style.display = 'flex';
+                    }, 800);
+                }
+            }
+        }
+
+        function getCrystalIcon(num) {
+            const icons = ['💎', '🔷', '🔶', '🟣', '🟢', '🔴'];
+            return icons[num % icons.length];
+        }
+        
+        function getCrystalColor(num) {
+            const colors = ['#00ffff', '#4488ff', '#ffaa00', '#aa00ff', '#00ff44', '#ff4444'];
+            return colors[num % colors.length];
+        }
+
+        initChest();
+        newRound();
+    </script>
+</body>
+</html>
