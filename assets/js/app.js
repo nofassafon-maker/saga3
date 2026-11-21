@@ -32,6 +32,55 @@
       : `<div class="card art-card no-img"><div class="body"><div class="tc-ico">✨</div><h3>${esc(a.name)}</h3><p>${esc(a.desc)}</p>${extra}</div></div>`;
   }
 
+  /* «до / після»: перетворення персонажа (assets/img/villains/<id>-before|-after) */
+  function transform(v) {
+    if (!v.img) return "";
+    const im = (k, alt) => `<img class="ba-${k}" src="${v.img}-${k}-s.jpg" srcset="${v.img}-${k}-s.jpg 320w, ${v.img}-${k}.jpg 640w" sizes="(max-width: 560px) 90vw, 340px" alt="${alt}"${k === "before" ? ' loading="lazy"' : ""} width="320" height="310">`;
+    return `<div class="ba" style="--p:0%">
+      ${im("before", `${esc(v.name)} до перетворення: ${esc(v.essence)}`)}
+      ${im("after", v.became || v.fate ? `${esc(v.name)} після перетворення: ${esc(v.became || v.fate)}` : "")}
+      <span class="ba-line" aria-hidden="true"></span>
+      <span class="ba-tag t-before" aria-hidden="true">До</span><span class="ba-tag t-after" aria-hidden="true">Після</span>
+      <input class="ba-range" type="range" min="0" max="100" value="0" aria-label="${esc(v.name)}: порівняти до і після перетворення">
+    </div>`;
+  }
+  /* повзунок і кнопка «Зрозуміти» для всіх карток .ba на сторінці */
+  function bindTransforms(root) {
+    root.addEventListener("input", (e) => {
+      if (!e.target.classList.contains("ba-range")) return;
+      const ba = e.target.closest(".ba");
+      ba.classList.add("dragging"); ba.style.setProperty("--p", e.target.value + "%");
+      ba.classList.toggle("shown", +e.target.value > 50);
+    });
+    root.addEventListener("change", (e) => { if (e.target.classList.contains("ba-range")) e.target.closest(".ba").classList.remove("dragging"); });
+    root.addEventListener("click", (e) => {
+      const b = e.target.closest(".ba-btn");
+      if (!b) return;
+      const ba = b.closest(".card").querySelector(".ba"), r = ba.querySelector(".ba-range");
+      const on = +r.value < 50;
+      ba.classList.remove("dragging");
+      r.value = on ? 100 : 0; ba.style.setProperty("--p", r.value + "%");
+      ba.classList.toggle("glow", on);
+      ba.classList.toggle("shown", on);
+      b.textContent = on ? "↺ Як було спочатку" : "✨ Зрозуміти";
+      b.setAttribute("aria-pressed", String(on));
+    });
+  }
+
+  /* друзі СилаВолії: поза ⇄ реакція (assets/img/friends/<id>-pose|-react) */
+  function friendPic(c) {
+    if (!c.img) return "";
+    const im = (k, alt) => `<img class="fr-${k}" src="${c.img}-${k}-s.jpg" srcset="${c.img}-${k}-s.jpg 240w, ${c.img}-${k}.jpg 480w" sizes="(max-width: 560px) 90vw, 260px" alt="${alt}"${k === "pose" ? ' loading="lazy"' : ""} width="240" height="240">`;
+    return `<button class="fr-pic" type="button" aria-pressed="false" aria-label="${esc(c.name)}: показати реакцію">
+      ${im("pose", esc(c.name))}${im("react", `${esc(c.name)} радіє`)}<span class="fr-hint" aria-hidden="true">✨</span></button>`;
+  }
+  function bindFriends(root) {
+    root.addEventListener("click", (e) => {
+      const b = e.target.closest(".fr-pic");
+      if (b) b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"));
+    });
+  }
+
   /* ---------- шапка і підвал ---------- */
   const NAV = [["index.html", "Головна"], ["world.html", "Світ"], ["heroes.html", "Герої"], ["library.html", "Пригоди"], ["school.html", "Школа"], ["treasures.html", "Скарби"]];
   if (D.shop) NAV.push(["shop.html", "Крамниця"]);
@@ -188,6 +237,8 @@
   }
 
   function treasuresPage(main) {
+    bindTransforms(main);
+    bindFriends(main);
     const render = () => {
       const p = progress();
       const read = p.readSet;
@@ -237,14 +288,22 @@
         <section class="section wrap"><h2>Ті, кого зрозуміли · ${vOpen} з ${villains.length}</h2>
           <p class="lead">Картка відкривається, щойно ти дочитаєш казку, де з'являється цей персонаж.</p>
           <div class="grid tgrid">${villains.map((v) => unlockedBy(v, read)
-            ? `<div class="card tcard"><div class="body"><div class="tc-ico">🌗</div><h3>${esc(v.name)}</h3><p>${esc(v.essence)}</p>${v.became ? `<p><span class="arrow">→ став:</span> ${esc(v.became)}</p>` : ""}</div></div>`
-            : lockCard(v)).join("")}</div>
+            ? (v.img
+              ? `<div class="card tcard villain-card">${transform(v)}<div class="body"><h3>${esc(v.name)}</h3><p><span class="arrow">${v.became ? "→ став:" : "→ у фіналі:"}</span> ${esc(v.became || v.fate || "")}</p><p><button class="btn ghost ba-btn" type="button" aria-pressed="false">✨ Зрозуміти</button></p></div></div>`
+              : `<div class="card tcard"><div class="body"><div class="tc-ico">🌗</div><h3>${esc(v.name)}</h3><p>${esc(v.essence)}</p>${v.became ? `<p><span class="arrow">→ став:</span> ${esc(v.became)}</p>` : ""}</div></div>`)
+            : v.img
+              ? (() => { const s0 = firstReadable(v); return `<div class="card tcard art-card locked"><img class="art-img veiled" src="${v.img}-before-s.jpg" alt="Закрита картка персонажа" loading="lazy"><span class="art-lock" aria-hidden="true">?</span><div class="body"><h3>${esc(v.name)}</h3><p>${s0 ? `Прочитай «<a href="read.html?id=${s0.id}">${esc(s0.title)}</a>», щоб відкрити картку.` : "Відкриється згодом."}</p></div></div>`; })()
+              : lockCard(v)).join("")}</div>
         </section>
 
         <section class="section wrap"><h2>Друзі СилаВолії · ${fOpen} з ${friends.length}</h2>
           <div class="grid tgrid">${friends.map((v) => unlockedBy(v, read)
-            ? `<div class="card tcard"><div class="body"><div class="tc-ico">💛</div><h3>${esc(v.name)}</h3><p>${esc(v.who)}</p></div></div>`
-            : lockCard(v)).join("")}</div>
+            ? (v.img
+              ? `<div class="card tcard friend-card">${friendPic(v)}<div class="body"><h3>${esc(v.name)}</h3><p>${esc(v.who)}</p></div></div>`
+              : `<div class="card tcard"><div class="body"><div class="tc-ico">💛</div><h3>${esc(v.name)}</h3><p>${esc(v.who)}</p></div></div>`)
+            : v.img
+              ? (() => { const s0 = firstReadable(v); return `<div class="card tcard friend-card locked"><div class="fr-pic"><img class="fr-pose veiled" src="${v.img}-pose-s.jpg" alt="Закрита картка друга" loading="lazy"><span class="art-lock" aria-hidden="true">?</span></div><div class="body"><h3>${esc(v.name)}</h3><p>${s0 ? `Прочитай «<a href="read.html?id=${s0.id}">${esc(s0.title)}</a>», щоб відкрити картку.` : "Відкриється згодом."}</p></div></div>`; })()
+              : lockCard(v)).join("")}</div>
         </section>
 
         <section class="section wrap"><h2>Чарівні артефакти · ${aOpen} з ${C.artifacts.length}</h2>
@@ -330,60 +389,21 @@
   const readMinutes = (s) => Math.max(1, Math.round(s.pages.reduce((n, p) => n + p.text.join(" ").split(/\s+/).length, 0) / 80));
 
   /* казкова сцена першого екрана (SVG, без зовнішніх картинок) */
+  /* казкова сцена першого екрана: ілюстрація + м'яке затемнення для тексту + іскорки */
   const PORTAL_SCENE = `
-    <svg class="portal-scene" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="pSky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#2f2160"/><stop offset=".38" stop-color="#6746A1"/><stop offset=".68" stop-color="#c9a2d8"/><stop offset=".86" stop-color="#f6c9b9"/><stop offset="1" stop-color="#F7EFD9"/>
-        </linearGradient>
-        <radialGradient id="pMoon"><stop offset="0" stop-color="#fffbe8"/><stop offset=".6" stop-color="#fff1c2"/><stop offset="1" stop-color="#fff1c2" stop-opacity="0"/></radialGradient>
-        <linearGradient id="pGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset="1" stop-color="#F6C76D"/></linearGradient>
-        <g id="pCloud"><path d="M0 40 a30 30 0 0 1 44 -26 a40 40 0 0 1 74 4 a28 28 0 0 1 30 40 H8 a18 18 0 0 1 -8 -18 Z"/></g>
-      </defs>
-      <rect width="1200" height="760" fill="url(#pSky)"/>
-      <g class="stars" fill="#fff">${Array.from({ length: 46 }, (_, k) => {
-        const x = (k * 263) % 1200, y = (k * 97) % 330 + 10, r = 0.8 + (k % 4) * 0.5;
-        return `<circle cx="${x}" cy="${y}" r="${r}" style="animation-delay:${(k % 7) * 0.6}s"/>`; }).join("")}</g>
-      <circle cx="960" cy="130" r="110" fill="url(#pMoon)" opacity=".85"/><circle cx="960" cy="130" r="46" fill="#fff8de"/>
-      <path class="rainbow" d="M140 560 A 460 300 0 0 1 1060 560" fill="none" stroke-width="16" stroke-linecap="round"
-        stroke="url(#pRainbow)" opacity=".55"/>
-      <linearGradient id="pRainbow" x1="0" x2="1"><stop offset="0" stop-color="#F3A9B9"/><stop offset=".25" stop-color="#F6C76D"/><stop offset=".5" stop-color="#77C9B1"/><stop offset=".75" stop-color="#7fb7e8"/><stop offset="1" stop-color="#A78BD2"/></linearGradient>
-      <g class="clouds" fill="#fff">
-        <use href="#pCloud" class="cl c1" opacity=".75"/><use href="#pCloud" class="cl c2" opacity=".55"/><use href="#pCloud" class="cl c3" opacity=".65"/>
-      </g>
-      <!-- Сирні гори -->
-      <g stroke="#d9a441" stroke-width="3" stroke-linejoin="round" fill="url(#pGold)">
-        <path d="M70 520 L200 330 L320 520 Z"/><path d="M230 520 L360 290 L500 520 Z"/><path d="M420 520 L520 380 L610 520 Z"/>
-      </g>
-      <g fill="#e9a93c" opacity=".7"><circle cx="190" cy="430" r="12"/><circle cx="350" cy="380" r="10"/><circle cx="390" cy="460" r="15"/><circle cx="520" cy="460" r="9"/></g>
-      <!-- Школа «ШляхдоМрій» -->
-      <g class="castle" fill="#4b3486">
-        <rect x="760" y="360" width="190" height="200"/><rect x="730" y="300" width="56" height="260"/><rect x="924" y="300" width="56" height="260"/><rect x="826" y="250" width="58" height="140"/>
-        <path d="M722 302 L758 238 L794 302 Z M916 302 L952 238 L988 302 Z M818 252 L855 170 L892 252 Z" fill="#6746A1"/>
-        <path d="M852 172 v-40 l26 10 l-26 10" fill="#F3A9B9"/>
-      </g>
-      <g class="windows" fill="#ffd77a">
-        <rect x="748" y="340" width="18" height="26" rx="9"/><rect x="942" y="340" width="18" height="26" rx="9" style="animation-delay:1.3s"/>
-        <rect x="845" y="290" width="20" height="30" rx="10" style="animation-delay:.6s"/><rect x="800" y="420" width="20" height="30" rx="10" style="animation-delay:2s"/>
-        <rect x="890" y="420" width="20" height="30" rx="10" style="animation-delay:.9s"/><path d="M836 560 v-56 a19 19 0 0 1 38 0 v56 Z"/>
-      </g>
-      <!-- Ліс Шепотів -->
-      <g class="trees">${[[1010, 520, 54], [1070, 500, 64], [1130, 525, 50], [1180, 505, 60], [40, 540, 46], [990, 560, 40]].map(([x, y, r], k) =>
-        `<g class="tree" style="transform-origin:${x}px ${y + r}px;animation-delay:${k * 0.7}s"><rect x="${x - 5}" y="${y + r * .4}" width="10" height="${r * .9}" rx="3" fill="#7a5638"/><circle cx="${x}" cy="${y}" r="${r}" fill="${k % 2 ? "#5aa877" : "#77C9B1"}"/></g>`).join("")}</g>
-      <!-- пагорби -->
-      <path d="M0 600 C 200 520 380 560 560 580 C 760 600 900 520 1200 560 V760 H0 Z" fill="#8fd0a8"/>
-      <path d="M0 660 C 260 600 480 640 700 650 C 900 660 1050 610 1200 640 V760 H0 Z" fill="#77C9B1"/>
-      <path d="M0 720 C 300 690 600 710 1200 700 V760 H0 Z" fill="#F7EFD9"/>
-      <!-- Лимонадна річка -->
-      <path d="M520 520 C 560 580 470 620 560 660 C 640 695 600 730 640 760" fill="none" stroke="#fff3a6" stroke-width="18" stroke-linecap="round" opacity=".9"/>
-    </svg>`;
+    <div class="portal-scene" aria-hidden="true">
+      <img class="portal-bg" src="assets/img/home-bg.jpg" alt="">
+      <div class="portal-shade"></div>
+      <div class="sparkles">${Array.from({ length: 14 }, (_, k) =>
+        `<i style="left:${(k * 37 + 7) % 96}%;top:${(k * 53 + 11) % 60}%;animation-delay:${(k % 7) * 0.7}s"></i>`).join("")}</div>
+    </div>`;
 
-  /* вхідні точки на сцені → розділи */
+  /* вхідні точки на сцені → місця на карті (там, де вони на ілюстрації) */
   const PORTAL_SPOTS = [
-    { href: "world.html#cheese_mountains", x: 11, y: 58, icon: "🧀", t: "Сирні гори" },
-    { href: "school.html", x: 88, y: 46, icon: "🏰", t: "Школа" },
-    { href: "world.html#whisper_forest", x: 90, y: 70, icon: "🌳", t: "Ліс Шепотів" },
-    { href: "world.html#lemonade_river", x: 12, y: 86, icon: "🍋", t: "Лимонадна річка" },
+    { href: "world.html#cheese_mountains", x: 13, y: 46, icon: "🧀", t: "Сирні гори" },
+    { href: "world.html#sweet_dreams_city", x: 84, y: 54, icon: "🍭", t: "Місто Солодких Мрій" },
+    { href: "world.html#whisper_forest", x: 9, y: 74, icon: "🌳", t: "Ліс Шепотів" },
+    { href: "world.html#lemonade_river", x: 60, y: 88, icon: "🍋", t: "Лимонадна річка" },
   ];
 
   pages.index = function (main) {
@@ -519,24 +539,34 @@
           ${h.likes ? `<div><b>Любить:</b> ${esc(h.likes.join(", "))}</div>` : ""}
           <div><b>Над чим працює:</b> ${esc(h.weakness)}</div>
         </div></div></article>`; };
-    const villain = (v) => `<div class="card"><div class="body">
+    const villain = (v) => `<div class="card villain-card">${transform(v)}<div class="body">
         <h3>${esc(v.name)}</h3><p>${esc(v.essence)}</p>
         ${v.became ? `<p><span class="arrow">→ став:</span> ${esc(v.became)}</p>` : ""}
+        ${v.img ? `<p><button class="btn ghost ba-btn" type="button" aria-pressed="false">✨ Зрозуміти</button></p>` : ""}
         <div class="chips">${(v.stories || (v.story ? [v.story] : [])).map(storyLink).join("")}</div></div></div>`;
     const np = byId(C.villains, "nanoput");
+    const lc = (t) => t ? t[0].toLowerCase() + t.slice(1) : "";
     main.innerHTML = `
       <section class="section wrap"><h1>Герої СилаВолії</h1>
         <p class="lead">Кожен із трьох друзів уособлює одну з сил: Серце, Світло і Розум. Окремо їм важко, разом — вони непереможні.</p>
         <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">${C.heroes.map(hero).join("")}</div></section>
       <section class="section wrap"><h2>Головний антагоніст — ${esc(np.name)}</h2>
-        <div class="card"><div class="body"><p>${esc(np.essence)}. ${esc(np.action)}.</p>
-          <p><b>Подоби:</b> ${esc(np.forms.join(", "))}. <b>Лігво:</b> ${esc(np.lair)}. <b>Боїться:</b> ${esc(np.weakness)}.</p></div></div></section>
+        <div class="card villain-card nanoput-card">${transform(np)}<div class="body"><p>${esc(np.essence)}. ${esc(np.action)}.</p>
+          <p><b>Подоби:</b> ${np.forms.map((f) => { const m = f.match(/^(.*?)\s*\(([A-D]\d+)\)$/); const st = m && story(m[2]);
+            return st && readable(st) ? `<a href="read.html?id=${st.id}" title="Казка «${esc(st.title)}»">${esc(m[1])}</a>` : esc(m ? m[1] : f); }).join(", ")}.
+            <b>Лігво:</b> ${esc(lc(np.lair))}. <b>Слабке місце:</b> ${esc(lc(np.weakness))}.</p>
+          ${np.fate ? `<p><span class="arrow">→ у фіналі:</span> ${esc(np.fate)}</p>` : ""}
+          ${np.img ? `<p><button class="btn ghost ba-btn" type="button" aria-pressed="false">✨ Зрозуміти</button></p>` : ""}</div></div></section>
       <section class="section wrap"><h2>Ті, кого вони зрозуміли</h2>
         <p class="lead">У СилаВолії ворогів не знищують. Кожна «темна» істота виявляється самотньою або не розуміє, що шкодить, — і змінюється.</p>
-        <div class="grid">${C.villains.filter((v) => v.id !== "nanoput").map(villain).join("")}</div></section>
+        <p class="hint">Потягни повзунок на картинці або натисни «Зрозуміти» — і побачиш, ким став кожен із них.</p>
+        <div class="grid villain-grid">${C.villains.filter((v) => v.id !== "nanoput").map(villain).join("")}</div></section>
       <section class="section wrap"><h2>Друзі та мешканці</h2>
-        <div class="grid">${C.characters.map((c) => `<div class="card"><div class="body"><h3>${esc(c.name)}</h3><p>${esc(c.who)}</p>
+        <p class="hint">Наведи на друга або торкнися картки — і побачиш, як він радіє.</p>
+        <div class="grid friend-grid">${C.characters.map((c) => `<div class="card friend-card">${friendPic(c)}<div class="body"><h3>${esc(c.name)}</h3><p>${esc(c.who)}</p>
           <div class="chips">${c.stories.map(storyLink).join("")}</div></div></div>`).join("")}</div></section>`;
+    bindTransforms(main);
+    bindFriends(main);
     // перевертання картки: герой ⇄ його артефакт (як у першому сайті SAGA)
     main.addEventListener("click", (e) => {
       const btn = e.target.closest(".flip-scene, .flip-bar");
