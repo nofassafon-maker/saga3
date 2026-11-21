@@ -24,6 +24,14 @@
     return readable(s) ? `<a class="chip" href="read.html?id=${s.id}">${esc(s.title)}</a>` : `<span class="chip">${esc(s.title)} · скоро</span>`;
   };
 
+  /* картки артефактів: готові ілюстровані картки з assets/img/artifacts (назва й опис — в alt) */
+  const artImg = (a, cls = "") => a.img ? `<img class="art-img${cls ? " " + cls : ""}" src="${a.img}-s.jpg" srcset="${a.img}-s.jpg 320w, ${a.img}.jpg 640w" sizes="(max-width: 560px) 88vw, 300px" alt="${esc(a.name)}: ${esc(a.desc)}" loading="lazy" width="320" height="388">` : "";
+  function artCard(a, extra = "") {
+    return a.img
+      ? `<div class="card art-card">${artImg(a)}${extra ? `<div class="body">${extra}</div>` : ""}</div>`
+      : `<div class="card art-card no-img"><div class="body"><div class="tc-ico">✨</div><h3>${esc(a.name)}</h3><p>${esc(a.desc)}</p>${extra}</div></div>`;
+  }
+
   /* ---------- шапка і підвал ---------- */
   const NAV = [["index.html", "Головна"], ["world.html", "Світ"], ["heroes.html", "Герої"], ["library.html", "Пригоди"], ["school.html", "Школа"], ["treasures.html", "Скарби"]];
   if (D.shop) NAV.push(["shop.html", "Крамниця"]);
@@ -240,9 +248,13 @@
         </section>
 
         <section class="section wrap"><h2>Чарівні артефакти · ${aOpen} з ${C.artifacts.length}</h2>
-          <div class="grid tgrid">${C.artifacts.map((a) => a.stories.some((id) => read[id])
-            ? `<div class="card tcard"><div class="body"><div class="tc-ico">✨</div><h3>${esc(a.name)}</h3><p>${esc(a.desc)}</p></div></div>`
-            : lockCard(a)).join("")}</div>
+          <div class="grid art-grid">${C.artifacts.map((a) => {
+            if (a.stories.some((id) => read[id])) return artCard(a);
+            if (!a.img) return lockCard(a);
+            const s = firstReadable(a);
+            return `<div class="card art-card locked">${artImg(a, "veiled").replace(/alt="[^"]*"/, 'alt="Закрита картка артефакту"')}<span class="art-lock" aria-hidden="true">?</span>
+              <div class="body"><p>${s ? `Прочитай «<a href="read.html?id=${s.id}">${esc(s.title)}</a>», щоб відкрити картку.` : "Відкриється згодом."}</p></div></div>`;
+          }).join("")}</div>
         </section>
 
         ${(() => { const cr = store.get("crafts", []); return `<section class="section wrap" id="crafts"><h2>Мої витвори · ${cr.length}</h2>
@@ -636,8 +648,7 @@
         </div>
       </section>
       <section class="scene-view" id="scene" hidden></section>
-      <section class="section wrap" id="artifacts"><h2>Чарівні артефакти</h2><div class="grid">${C.artifacts.map((a) => `<div class="card"><div class="body"><h3>✨ ${esc(a.name)}</h3><p>${esc(a.desc)}</p>
-        <div class="chips">${a.stories.map(storyLink).join("")}</div></div></div>`).join("")}</div></section>`;
+      <section class="section wrap" id="artifacts"><h2>Чарівні артефакти</h2><div class="grid art-grid">${C.artifacts.map((a) => artCard(a, `<div class="chips">${a.stories.map(storyLink).join("")}</div>`)).join("")}</div></section>`;
 
     const panel = $("#panel", main), scene = $("#scene", main), mapView = $("#mapView", main);
 
@@ -722,7 +733,9 @@
                 ${firstRead ? `<p><a class="btn" href="read.html?id=${firstRead.id}">📖 Читати «${esc(firstRead.title)}»</a></p>` : ""}
               </div></div>
               ${who.length ? `<div class="card"><div class="body"><h3>Кого тут зустріти</h3><div class="chips">${who.map((v) => `<span class="chip luna">${esc(v.name)}</span>`).join("")}</div></div></div>` : ""}
-              ${arts.length ? `<div class="card"><div class="body"><h3>Артефакти</h3><div class="chips">${arts.map((a) => `<span class="chip crash">✨ ${esc(a.name)}</span>`).join("")}</div></div></div>` : ""}
+              ${arts.length ? `<div class="card"><div class="body"><h3>Артефакти</h3><div class="art-thumbs">${arts.map((a) => a.img
+                ? `<a class="art-thumb" href="${a.img}.jpg" data-art="${a.id}">${artImg(a)}<span>${esc(a.name)}</span></a>`
+                : `<span class="chip crash">✨ ${esc(a.name)}</span>`).join("")}</div></div></div>` : ""}
             </aside>
           </div>
           <p class="scene-back"><a class="btn gold" href="#" data-back>🗺️ Повернутися на карту</a></p>
@@ -731,6 +744,14 @@
       mapView.hidden = true;
       scene.hidden = false;
       scene.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); back(); }));
+      scene.querySelectorAll("[data-art]").forEach((t) => t.addEventListener("click", (e) => {   // велика картка артефакту
+        e.preventDefault();
+        const art = byId(C.artifacts, t.dataset.art);
+        let dlg = document.getElementById("artDlg");
+        if (!dlg) { dlg = document.createElement("dialog"); dlg.id = "artDlg"; dlg.className = "art-dlg"; document.body.append(dlg); dlg.addEventListener("click", (ev) => { if (ev.target === dlg) dlg.close(); }); }
+        dlg.innerHTML = `<form method="dialog"><img src="${art.img}.jpg" alt="${esc(art.name)}: ${esc(art.desc)}"><button class="btn gold" value="close">Закрити</button></form>`;
+        dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+      }));
       const sp = $(".spark", scene);
       if (sp) sp.addEventListener("click", () => {
         const st = stamps(); st[l.id] = Date.now(); store.set("stamps", st);

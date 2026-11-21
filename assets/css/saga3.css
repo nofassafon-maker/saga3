@@ -410,3 +410,22 @@ body.reader.focus .progress { background: #3a2f55; }
   .workshop { grid-template-columns: 1fr; }
   .ws-preview { position: static; }
 }
+
+/* ---------- картки артефактів (готові ілюстровані картки) ---------- */
+.art-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.art-card { position: relative; background: #1c1233; }
+.art-card .art-img { width: 100%; height: auto; aspect-ratio: 692 / 840; object-fit: cover; display: block; transition: transform .3s; }
+.art-card:hover .art-img { transform: scale(1.02); }
+.art-card .body { background: var(--paper); }
+.art-card.no-img { background: var(--paper); }
+.art-card.locked .art-img.veiled { filter: blur(9px) grayscale(.8) brightness(.55); transform: scale(1.08); }
+.art-card.locked { overflow: hidden; }
+.art-lock { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; font-size: 2.6rem; font-weight: 900; color: #fff; background: rgba(103, 70, 161, .7); border: 3px solid rgba(255, 255, 255, .7); }
+.art-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+.art-thumb { text-decoration: none; display: flex; flex-direction: column; gap: 4px; font-size: .8rem; font-weight: 800; line-height: 1.2; color: var(--ink); }
+.art-thumb .art-img { width: 100%; height: auto; aspect-ratio: 692 / 840; object-fit: cover; border-radius: 10px; box-shadow: var(--shadow); transition: transform .2s; }
+.art-thumb:hover .art-img { transform: translateY(-3px); }
+.art-dlg { border: 0; padding: 0; background: transparent; max-width: min(460px, 92vw); }
+.art-dlg::backdrop { background: rgba(28, 18, 51, .8); }
+.art-dlg form { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.art-dlg img { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
