@@ -840,7 +840,7 @@
   };
 
   const gameCards = (group) => D.games.filter((g) => (g.group || "adventure") === group).map((g) =>
-    `<a class="card" href="${g.file}"><div class="cover empty game">${g.icon || "🎮"}</div><div class="body"><h3>${esc(g.title)}</h3><p>${esc(g.desc)}</p></div></a>`).join("");
+    `<a class="card" href="${g.file}">${g.img ? `<div class="cover game game-pic"><img src="${g.img}" alt="" loading="lazy"></div>` : `<div class="cover empty game">${g.icon || "🎮"}</div>`}<div class="body"><h3>${esc(g.title)}</h3><p>${esc(g.desc)}</p></div></a>`).join("");
 
   /* ---------- крамниця ---------- */
   pages.shop = function (main) {

@@ -544,3 +544,7 @@ svg.map { display: block; width: 100%; height: auto; }
   .school-hero .spot-t { display: none; }
   .school-hero .spot { padding: 4px; }
 }
+
+/* картка гри з картинкою (Hero Math Academy) */
+.cover.game-pic { display: block; background: #0b1a31; overflow: hidden; }
+.cover.game-pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
