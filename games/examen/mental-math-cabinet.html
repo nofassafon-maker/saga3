@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>⚡ HERO MATH ACADEMY</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --void: #05050f;
@@ -667,6 +666,162 @@ body::after {
 .empty-state .ei { font-size:3rem; margin-bottom:14px; opacity:.3; }
 .empty-state p { font-size:.85rem; letter-spacing:2px; font-family:'Bebas Neue',sans-serif; }
 </style>
+<style id="neuro-theme">
+/* =====================================================================
+   Тема в стилі NEURO BEADS: нічний океан, неоново-блакитні рамки,
+   помаранчеві кісточки, перли, заокруглені скляні панелі.
+   Лише оформлення — логіка гри без змін (оригінал: _source/games_backup/).
+   ===================================================================== */
+:root {
+  --void: #0a192f; --deep: #0b1d36; --panel: rgba(10, 25, 47, .85); --panel2: #112240;
+  --border: rgba(0, 212, 255, .28);
+  --hero: #ff9d00; --hero2: #ffc061;            /* неоновий помаранчевий (кісточки, акценти) */
+  --power: #00d4ff; --power2: #7fe9ff;          /* неоновий блакитний */
+  --energy: #a18cd1; --safe: #84fab0; --safe2: #b8ffd6; --danger: #ff3e3e; --danger2: #ff7a7a;
+  --muted: #8892b0; --text: #e0f7fa; --white: #ffffff;
+  --glow-hero: 0 0 18px rgba(255, 157, 0, .45); --glow-power: 0 0 18px rgba(0, 212, 255, .45);
+  --bead-w: 40px; --bead-h: 30px; --col-w: 40px; --col-h: 250px; --shift-up: 32px; --shift-dn: -42px;
+}
+* { clip-path: none !important; }
+body, button, input, select, textarea,
+.badge-title, .badge-sub, .topbar-logo, .nav-tab, .section-label, .power-num, .hero-panel-title,
+.mission-list-header, .mission-num, .lesson-num-tag, .lesson-main-title, .session-timer, #flash-num,
+.btn-enter, .btn-power-start, .btn-verify, .hsb-big, .hsb-title, .pearl-mini .pt, .mode-btn-name, .arena-mode-badge {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+}
+body { background: radial-gradient(circle at center, #112240 0%, #0a192f 100%) fixed; color: var(--text); }
+body::before {
+  background:
+    radial-gradient(ellipse 70% 45% at 15% 0%, rgba(0, 212, 255, .08), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 100%, rgba(161, 140, 209, .08), transparent 60%);
+}
+body::after { display: none; }
+.bg-bolt, .login-bg-text { display: none; }
+
+/* скляні панелі з неоновою рамкою */
+.login-card, .power-card, .hero-panel, .mission-list-card, .lesson-card, .practice-block,
+.mode-selector, .flash-arena, .hero-stat-box {
+  background: var(--panel) !important; border: 1px solid rgba(0, 212, 255, .55) !important;
+  border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 14px rgba(0, 212, 255, .08);
+  overflow: hidden;
+}
+.login-card { border-top: 1px solid var(--power) !important; }
+.login-card::before, .power-card::before, .hero-stat-box::before, .practice-block::before, .lesson-card-header::before, .flash-arena::before { display: none; }
+.lesson-card-header, .mission-list-header, .practice-header { background: rgba(0, 212, 255, .06) !important; border-color: rgba(0, 212, 255, .25) !important; }
+
+/* логотип як у NEURO BEADS */
+.badge-icon, .hero-avatar, .mission-num {
+  border-radius: 50%; background: radial-gradient(circle at 30% 30%, #fff, var(--power)) !important;
+  color: var(--void) !important; box-shadow: 0 0 12px rgba(0, 212, 255, .5);
+}
+.badge-title, .topbar-logo { color: var(--power) !important; font-weight: 800; letter-spacing: 1px !important; }
+.topbar-logo span.accent { color: var(--hero); }
+.topbar-logo .bolt { color: var(--hero); }
+.badge-sub { letter-spacing: 1px; }
+
+/* верхня панель і вкладки — перемикач-«пігулка» */
+.topbar { background: rgba(10, 25, 47, .92); border-bottom: 1px solid rgba(0, 212, 255, .3); box-shadow: 0 4px 20px rgba(0, 0, 0, .4); }
+.topbar::after { background: linear-gradient(90deg, var(--power), var(--hero), var(--energy), var(--power)); background-size: 200% 100%; height: 1px; }
+.hero-chip { background: rgba(0, 212, 255, .08); border: 1px solid rgba(0, 212, 255, .35); border-radius: 999px; }
+.hero-name { color: var(--pearl, #e0f7fa); }
+.session-timer { color: var(--hero); text-shadow: var(--glow-hero); font-variant-numeric: tabular-nums; }
+.nav-tabs {
+  background: rgba(0, 0, 0, .3); border: 1px solid var(--power); border-radius: 20px;
+  width: fit-content; max-width: calc(100% - 24px); margin: 14px auto 0; padding: 5px; gap: 4px; flex-wrap: wrap; justify-content: center;
+}
+.nav-tab { border: 0 !important; border-radius: 15px; padding: 9px 18px; letter-spacing: .5px; font-weight: 700; color: #8892b0; margin: 0; }
+.nav-tab::before { display: none; }
+.nav-tab.active { background: #00bcd4; color: var(--void); box-shadow: 0 0 10px rgba(0, 188, 212, .4); }
+
+/* кнопки */
+.btn-enter, .btn-power-start, .btn-verify, .btn-pr-start, .btn-pr-check, .btn-next-mission, .btn-mission-done {
+  background: var(--power) !important; color: var(--void) !important; border: none !important;
+  border-radius: 8px !important; font-weight: 800 !important; letter-spacing: .5px !important;
+  box-shadow: 0 0 12px rgba(0, 212, 255, .3);
+}
+.btn-enter:hover, .btn-power-start:hover, .btn-verify:hover, .btn-pr-start:hover, .btn-pr-check:hover, .btn-next-mission:hover {
+  background: var(--power2) !important; box-shadow: 0 0 20px rgba(0, 212, 255, .55);
+}
+.btn-mission-done.done { background: var(--safe) !important; }
+.btn-power-start::after { display: none; }
+.btn-pr-reset, .btn-rst, .btn-logout {
+  background: rgba(255, 62, 62, .15) !important; color: #ff3e3e !important; border: 1px solid #ff3e3e !important; border-radius: 8px !important;
+}
+.hero-field input, .cfg-group input, .cfg-group select, #answer-section input, .practice-body input {
+  background: rgba(0, 0, 0, .3) !important; border: 1px solid rgba(0, 212, 255, .5) !important; border-radius: 8px !important; color: var(--text) !important;
+}
+.hero-field label, .cfg-group label { color: var(--power); letter-spacing: 1px; }
+
+/* режими тренажера — як перемикач режимів NEURO BEADS */
+.mode-btn { border-radius: 12px !important; border: 1px solid rgba(0, 212, 255, .25) !important; background: rgba(0, 0, 0, .25) !important; }
+.mode-btn::before { display: none; }
+.mode-btn.selected { background: rgba(0, 188, 212, .18) !important; border-color: var(--power) !important; box-shadow: 0 0 12px rgba(0, 188, 212, .35); }
+.mode-btn.selected .mode-btn-name { color: var(--power); }
+
+/* арена: число світиться, як «Ціль» у NEURO BEADS */
+#flash-num { color: #e0f7fa; text-shadow: 0 0 14px var(--power), 0 0 40px rgba(0, 212, 255, .4); }
+#flash-num.minus { color: #ffd1d1; text-shadow: 0 0 14px #ff3e3e; }
+.arena-mode-badge { background: rgba(0, 212, 255, .12); color: var(--power); border: 1px solid rgba(0, 212, 255, .4); border-radius: 999px; }
+.arena-scanline { display: none; }
+.flash-sub { color: var(--muted); }
+
+/* прогрес і «енергія» */
+.power-num { color: var(--hero) !important; text-shadow: var(--glow-hero); }
+.power-card.cyan .power-num { color: var(--power) !important; text-shadow: var(--glow-power); }
+.power-card.purple .power-num { color: var(--energy) !important; }
+.power-card .glow-orb { display: none; }
+.xp-track { background: rgba(0, 0, 0, .4); border: 1px solid rgba(0, 212, 255, .35); border-radius: 999px; height: 12px; }
+.xp-fill { background: linear-gradient(90deg, var(--power), var(--hero)); border-radius: 999px; }
+.xp-fill::after { display: none; }
+.hsb-big { color: var(--hero); text-shadow: var(--glow-hero); }
+.ring-fill { stroke: var(--hero); filter: drop-shadow(0 0 4px rgba(255, 157, 0, .6)); }
+
+/* серія — нитка перлин, як намисто */
+.streak-pip { width: 22px !important; height: 22px !important; border-radius: 50% !important; border: 2px solid #555 !important; background: rgba(0, 0, 0, .5) !important; }
+.streak-pip.lit { border-color: #fff !important; animation: pearl-pop-n .6s cubic-bezier(.175, .885, .32, 1.275) both; }
+.streak-pip.lit:nth-child(5n+1) { background: radial-gradient(circle at 30%, #fff, #ff9a9e) !important; box-shadow: 0 0 10px #ff9a9e; }
+.streak-pip.lit:nth-child(5n+2) { background: radial-gradient(circle at 30%, #fff, #a18cd1) !important; box-shadow: 0 0 10px #a18cd1; }
+.streak-pip.lit:nth-child(5n+3) { background: radial-gradient(circle at 30%, #fff, #84fab0) !important; box-shadow: 0 0 10px #84fab0; }
+.streak-pip.lit:nth-child(5n+4) { background: radial-gradient(circle at 30%, #fff, #fbc2eb) !important; box-shadow: 0 0 10px #fbc2eb; }
+.streak-pip.lit:nth-child(5n+5) { background: radial-gradient(circle at 30%, #fff, #f6d365) !important; box-shadow: 0 0 10px #f6d365; }
+@keyframes pearl-pop-n {
+  0% { transform: scale(0); box-shadow: 0 0 40px 16px #fff; }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.pearl-mini .pi { width: 44px; height: 44px; margin: 0 auto; border-radius: 50%; font-size: 0; background: radial-gradient(circle at 30% 30%, #fff, gold); box-shadow: 0 0 16px gold; }
+.pearl-mini .pt { color: var(--hero); letter-spacing: 1px; font-weight: 800; }
+
+/* абакус — дерев'яна рамка, неоновий стрижень, помаранчеві кісточки, як у NEURO BEADS */
+.abacus-mini-wrap { background: rgba(0, 0, 0, .6) !important; border: 3px solid #5d4037 !important; border-radius: 12px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+.abacus-mini { gap: 15px !important; }
+.col-m::before { width: 4px !important; background: linear-gradient(to bottom, transparent, var(--power), transparent) !important; }
+.col-m::after { background: #5d4037 !important; height: 8px !important; border-radius: 2px; box-shadow: 0 2px 5px rgba(0, 0, 0, .5); }
+.bead-m { background: radial-gradient(circle at 30% 30%, #555, #111) !important; border: 0 !important; transition: transform .3s cubic-bezier(.175, .885, .32, 1.275), background .3s, box-shadow .3s !important; }
+.bead-m.active { background: radial-gradient(circle at 30% 30%, #fff, var(--hero)) !important; }
+@keyframes bead-pulse { 0%, 100% { box-shadow: 0 0 10px var(--hero); } 50% { box-shadow: 0 0 25px var(--hero), 0 0 10px #fff; } }
+.abacus-total-val { color: var(--hero); text-shadow: var(--glow-hero); }
+
+/* зворотний зв'язок */
+.practice-feedback.correct { color: var(--safe) !important; }
+.practice-feedback.wrong { color: #ff7a7a !important; }
+.section-label { color: var(--power); letter-spacing: 1px; }
+.section-label::after { background: rgba(0, 212, 255, .25); }
+
+/* вузькі екрани: панель і кнопки не виходять за край */
+.topbar { flex-wrap: wrap; gap: 6px 12px; padding: 6px 16px; }
+.topbar-logo { white-space: nowrap; font-size: 1.15rem; padding: 8px 0; }
+.topbar-right { flex-wrap: wrap; gap: 8px; }
+.practice-controls { display: flex !important; flex-wrap: wrap; gap: 8px; }
+.practice-controls .btn-pr { flex: 1 1 110px; min-width: 0; }
+.abacus-mini-wrap { max-width: 100%; overflow-x: auto; }
+@media (max-width: 480px) {
+  :root { --bead-w: 34px; --bead-h: 26px; --col-w: 34px; --col-h: 220px; --shift-up: 28px; --shift-dn: -36px; }
+  .abacus-mini { gap: 8px !important; }
+  .nav-tab { padding: 8px 12px; font-size: .85rem; }
+  .topbar { padding: 0 12px; }
+}
+</style>
 </head>
 <body>
 
@@ -704,7 +859,7 @@ body::after {
 <div id="app">
   <nav class="topbar">
     <div class="topbar-logo">
-      <span class="bolt">⚡</span> HERO MATH ACADEMY
+      <span class="bolt">⚡</span> HERO MATH <span class="accent">ACADEMY</span>
     </div>
     <div class="topbar-right">
       <div class="session-timer" id="session-timer">00:00</div>
