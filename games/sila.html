@@ -1,550 +1,617 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>СилаВолія: Повна Пригода</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СилаВолія: Повна пригода</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+:root { --gold:#ffd23f; --magic:#6746A1; --lav:#b9a6e6; --power:#ff6b6b; --kind:#2ed573; --ink:#1d1530; --panel:rgba(24,16,44,.92); }
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; }
+body { font-family:'Nunito',sans-serif; background:#120c22; color:#fff; display:flex; justify-content:center; align-items:center; user-select:none; -webkit-tap-highlight-color:transparent; }
+#game { position:relative; width:100%; max-width:600px; height:100%; max-height:920px; overflow:hidden; background:#000; box-shadow:0 0 60px rgba(0,0,0,.6); }
+button { font-family:inherit; }
+[hidden] { display:none !important; }
 
-        :root {
-            --primary: #ffd900;
-            --secondary: #0057b7;
-            --danger: #ff4757;
-            --kindness: #2ed573;
-            --dark: #2f3542;
-        }
+/* сцена */
+#scene-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:opacity .5s, transform 8s ease-out; }
+#game.playing #scene-bg { transform:scale(1.06); }
+#scene-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(10,6,24,.55) 0%, rgba(10,6,24,.05) 22%, rgba(10,6,24,.1) 55%, rgba(10,6,24,.85) 100%); }
 
-        body {
-            font-family: 'Nunito', sans-serif;
-            background: #1e272e;
-            color: white;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            user-select: none;
-            touch-action: none;
-        }
+/* верхня панель */
+#top { position:absolute; top:0; left:0; right:0; display:flex; align-items:center; gap:8px; padding:10px 12px; z-index:20; }
+#top .lvl { flex:1; font-weight:900; font-size:15px; text-shadow:0 2px 4px #000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stat { background:rgba(0,0,0,.55); border-radius:99px; padding:5px 11px; font-weight:900; font-size:15px; }
+.stat.p { color:var(--power); } .stat.k { color:var(--kind); }
+.icon-btn { background:rgba(0,0,0,.55); color:#fff; border:0; border-radius:50%; width:36px; height:36px; font-size:17px; cursor:pointer; text-decoration:none; display:grid; place-items:center; }
 
-        #game-container {
-            position: relative;
-            width: 100%; max-width: 600px;
-            height: 100%; max-height: 900px;
-            background: #000;
-            overflow: hidden;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column;
-        }
+/* поле міні-гри */
+#arena { position:absolute; left:0; right:0; top:56px; bottom:var(--dlg-h, 190px); z-index:10; }
+.timerbar { position:absolute; top:4px; left:14px; right:14px; height:12px; background:rgba(0,0,0,.5); border-radius:99px; overflow:hidden; border:1px solid rgba(255,255,255,.25); }
+.timerbar i { display:block; height:100%; width:100%; background:linear-gradient(90deg,#ff9f43,var(--gold)); transition:width .1s linear; }
+.timerbar.frozen i { background:linear-gradient(90deg,#74b9ff,#a29bfe); }
+.goal { position:absolute; top:22px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.6); padding:4px 14px; border-radius:99px; font-weight:900; font-size:15px; white-space:nowrap; }
 
-        canvas {
-            display: block;
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 0;
-        }
+/* діалог */
+#dlg { position:absolute; left:0; right:0; bottom:0; z-index:30; background:var(--panel); border-top:4px solid var(--gold); padding:14px 14px 12px; display:flex; flex-direction:column; gap:10px; }
+.say { display:flex; gap:12px; align-items:flex-start; cursor:pointer; }
+.face { width:62px; height:62px; flex:0 0 62px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); background:#fff; }
+.face.villain { border-color:#a4b0be; }
+.who { color:var(--gold); font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.5px; }
+.txt { font-size:16px; line-height:1.4; color:#efe9ff; min-height:44px; }
+.row { display:flex; gap:8px; }
+.btn { flex:1; padding:13px 10px; border:0; border-radius:14px; font-weight:900; font-size:15px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.3); color:#fff; }
+.btn:active { transform:translateY(3px); box-shadow:none; }
+.btn.next { background:var(--magic); }
+.btn.power { background:linear-gradient(135deg,#ff7b7b,#e84a4a); }
+.btn.kind { background:linear-gradient(135deg,#7bed9f,#20bf6b); color:#0d2b18; }
+.btn.gold { background:linear-gradient(135deg,#ffe066,#f6b93b); color:var(--ink); }
 
-        /* --- UI LAYER --- */
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            display: flex; flex-direction: column; justify-content: space-between;
-            z-index: 10;
-        }
+/* допомога героїв */
+.helpers { display:flex; gap:10px; justify-content:center; align-items:center; }
+.helpers small { color:var(--lav); font-weight:700; font-size:12px; }
+.hlp { position:relative; width:54px; height:54px; border-radius:50%; padding:0; border:3px solid var(--gold); background:#fff; cursor:pointer; overflow:visible; }
+.hlp img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+.hlp span { position:absolute; bottom:-6px; right:-6px; font-size:18px; filter:drop-shadow(0 1px 2px #000); }
+.hlp:disabled { filter:grayscale(1); opacity:.4; cursor:default; }
+.hlp:not(:disabled) { animation:pulse 1.6s infinite; }
+@keyframes pulse { 50% { box-shadow:0 0 0 6px rgba(255,210,63,.35); } }
 
-        /* Top Bar */
-        #top-bar {
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-            padding: 10px 15px;
-            display: flex; justify-content: space-between;
-            border-bottom: 2px solid rgba(255,255,255,0.1);
-        }
-        .stat { font-weight: 900; font-size: 16px; display: flex; align-items: center; gap: 5px; text-shadow: 1px 1px 0 #000; }
+/* екрани */
+.screen { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; overflow-y:auto; padding:22px 16px 28px; text-align:center;
+  background:radial-gradient(circle at 50% 0%, #3d2a6e 0%, #1a1033 60%, #120c22 100%); }
+.screen > * { flex-shrink:0; }
+.screen h1 { margin:6px 0 0; color:var(--gold); font-size:30px; letter-spacing:1px; text-shadow:0 3px 0 #5a3c00; }
+.screen h2 { margin:2px 0 14px; color:var(--lav); font-size:16px; letter-spacing:3px; }
+.trio { display:flex; justify-content:center; margin:4px 0 8px; }
+.trio img { width:92px; height:92px; border-radius:50%; object-fit:cover; border:4px solid var(--gold); margin:0 -8px; background:#fff; animation:bob 2.4s ease-in-out infinite; }
+.trio img:nth-child(2) { animation-delay:.3s; width:108px; height:108px; z-index:1; } .trio img:nth-child(3) { animation-delay:.6s; }
+@keyframes bob { 50% { transform:translateY(-8px); } }
+.lead { color:#d9d0f5; max-width:420px; font-size:15px; line-height:1.45; margin:0 0 14px; }
+.lvls { display:grid; gap:10px; width:100%; max-width:440px; }
+.lvl-card { display:flex; align-items:center; gap:12px; padding:8px; border-radius:16px; background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.12); color:#fff; text-align:left; cursor:pointer; }
+.lvl-card img { width:62px; height:62px; border-radius:12px; object-fit:cover; }
+.lvl-card b { display:block; font-size:15px; } .lvl-card small { color:var(--lav); font-size:12.5px; }
+.lvl-card .st { margin-left:auto; font-size:16px; letter-spacing:1px; white-space:nowrap; }
+.lvl-card.locked { opacity:.45; cursor:default; } .lvl-card.locked img { filter:grayscale(1) blur(1px); }
+.chest { width:100%; max-width:440px; margin-top:18px; }
+.chest h3 { color:var(--gold); margin:0 0 8px; font-size:16px; }
+.arts { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.arts figure { margin:0; width:78px; }
+.arts img { width:78px; height:78px; border-radius:14px; object-fit:cover; border:2px solid var(--gold); background:#fff; }
+.arts figure.no img { filter:grayscale(1) brightness(.4); border-color:#555; }
+.arts figcaption { font-size:11px; color:#d9d0f5; line-height:1.2; margin-top:3px; }
+.big-start { margin-top:16px; width:100%; max-width:440px; font-size:18px; padding:16px; }
+.screen .back { position:absolute; top:12px; left:12px; }
 
-        /* Dialog Box */
-        #dialog-box {
-            background: rgba(20, 25, 35, 0.95);
-            border-top: 4px solid var(--primary);
-            padding: 20px;
-            pointer-events: auto;
-            min-height: 25vh;
-            display: flex; flex-direction: column; gap: 10px;
-            transition: transform 0.3s;
-        }
-        .speaker-name { color: var(--primary); font-size: 14px; text-transform: uppercase; font-weight: bold; }
-        .dialog-text { font-size: 16px; line-height: 1.4; color: #dfe6e9; flex-grow: 1; }
-        
-        /* Buttons */
-        .choices-container { display: flex; gap: 10px; margin-top: 5px; }
-        .btn {
-            flex: 1; padding: 15px; border: none; border-radius: 12px;
-            font-family: inherit; font-weight: bold; font-size: 16px;
-            cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-            transition: transform 0.1s;
-        }
-        .btn:active { transform: scale(0.95); box-shadow: none; transform: translateY(4px); }
-        .btn-power { background: linear-gradient(135deg, #ff6b6b, #ee5253); color: white; }
-        .btn-kind { background: linear-gradient(135deg, #7bed9f, #2ed573); color: #1e272e; }
-        .btn-next { background: var(--secondary); color: white; width: 100%; }
+/* результат рівня / фінал */
+.win-art { width:150px; height:150px; border-radius:24px; object-fit:cover; border:4px solid var(--gold); background:#fff; box-shadow:0 0 40px rgba(255,210,63,.6); animation:pop .6s; margin-top:8px; }
+.stars-big { font-size:42px; letter-spacing:6px; margin:10px 0 2px; }
+.stars-big span { display:inline-block; animation:pop .5s backwards; } .stars-big .off { filter:grayscale(1); opacity:.35; }
+@keyframes pop { 0% { transform:scale(0); } 70% { transform:scale(1.2); } 100% { transform:scale(1); } }
+.morph { position:relative; width:200px; height:200px; margin:8px auto 4px; }
+.morph img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; border:5px solid var(--gold); background:#fff; }
+.morph .after { animation:reveal 2.2s 0.6s both; }
+@keyframes reveal { from { clip-path:circle(0% at 50% 50%); } to { clip-path:circle(75% at 50% 50%); } }
 
-        /* --- MINIGAME LAYERS --- */
-        #minigame-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 75%; /* До діалогу */
-            z-index: 20;
-            display: none;
-            align-items: center; justify-content: center;
-            pointer-events: auto;
-        }
+/* міні-гра 1: почуття для ДодайСилу */
+.stone { position:absolute; left:50%; bottom:8px; transform:translateX(-50%); width:120px; height:120px; border-radius:50%; overflow:hidden; border:4px solid #fff;
+  transition:box-shadow .3s, filter .3s; filter:saturate(var(--sat,.3)) brightness(var(--br,.75)); box-shadow:0 0 calc(var(--glow,0) * 1px) calc(var(--glow,0) * .4px) rgba(255,220,120,.9); }
+.stone img { width:100%; height:100%; object-fit:cover; }
+.bubble { position:absolute; bottom:-60px; padding:10px 14px; border-radius:22px; font-weight:900; font-size:15px; cursor:pointer; white-space:nowrap;
+  animation:rise linear forwards; box-shadow:0 4px 12px rgba(0,0,0,.35); border:2px solid rgba(255,255,255,.8); transition:opacity .3s, filter .3s; }
+.bubble.good { background:linear-gradient(135deg,#fff3b0,#ffd1e8); color:#5a2d6e; }
+.bubble.bad { background:linear-gradient(135deg,#636e72,#2d3436); color:#dfe6e9; }
+#arena.hint .bubble.bad { opacity:.15; }
+#arena.hint .bubble.good { filter:drop-shadow(0 0 10px #fff58a); }
+@keyframes rise { to { transform:translateY(calc(-1 * var(--h))); } }
 
-        /* Memory Game */
-        .memory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px;}
-        .mem-btn {
-            width: 80px; height: 80px; border-radius: 20px; 
-            border: 4px solid rgba(255,255,255,0.2);
-            opacity: 0.5; transition: 0.2s;
-        }
-        .mem-btn.lit { opacity: 1; transform: scale(1.1); box-shadow: 0 0 30px currentColor; border-color: white; }
+/* міні-гра 2: мелодія */
+.pads { position:absolute; inset:40px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:14px 34px; align-content:center; }
+.pad { aspect-ratio:1; max-height:150px; justify-self:center; width:100%; max-width:150px; border-radius:50%; border:5px solid rgba(255,255,255,.55); cursor:pointer; font-size:40px;
+  opacity:.6; transition:transform .12s, opacity .12s, box-shadow .12s; box-shadow:0 8px 0 rgba(0,0,0,.35); }
+.pad.lit { opacity:1; transform:scale(1.1); box-shadow:0 0 40px 10px currentColor; border-color:#fff; }
+.pad.tip { animation:tip .5s 3; }
+@keyframes tip { 50% { box-shadow:0 0 0 10px #fff; } }
+.pads.locked .pad { cursor:default; }
 
-        /* Riddle Game */
-        .riddle-box { background: white; color: #222; padding: 20px; border-radius: 15px; width: 80%; text-align: center; box-shadow: 0 10px 30px black; }
-        .riddle-eq { font-size: 28px; margin: 15px 0; font-weight: bold; }
-        .riddle-opts { display: flex; gap: 10px; justify-content: center; }
-        .riddle-btn { background: #333; color: white; padding: 10px 20px; border-radius: 8px; border:none; font-size: 20px; }
+/* міні-гра 3: цукеркові загадки */
+.riddle { position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); width:min(92%,380px); background:rgba(255,250,240,.96); color:var(--ink); border-radius:22px; padding:16px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,.5); border:4px solid #ff9ff3; }
+.riddle .n { font-size:13px; color:#a55eea; font-weight:900; letter-spacing:1px; }
+.eq { font-size:30px; font-weight:900; margin:6px 0; }
+.eq.ask { color:#e84393; }
+.opts { display:flex; gap:10px; justify-content:center; margin-top:10px; }
+.opt { width:72px; height:62px; border-radius:16px; border:0; background:#6c5ce7; color:#fff; font-size:26px; font-weight:900; cursor:pointer; box-shadow:0 4px 0 #3c2f9e; transition:opacity .3s; }
+.opt.wrong { background:#b2bec3; box-shadow:none; animation:shake .4s; } .opt.gone { opacity:0; pointer-events:none; }
+.reveal { color:#00a884; font-weight:900; font-size:15px; margin-top:6px; min-height:20px; }
+@keyframes shake { 25% { transform:translateX(-6px); } 75% { transform:translateX(6px); } }
 
-        /* Boss Battle */
-        #boss-target {
-            position: absolute;
-            font-size: 60px;
-            cursor: pointer;
-            transition: top 0.2s, left 0.2s; /* Плавне переміщення */
-            filter: drop-shadow(0 0 10px red);
-            user-select: none;
-        }
-        .boss-timer {
-            position: absolute; top: 60px; font-size: 24px; font-weight: bold; color: var(--danger);
-            background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 20px;
-        }
+/* міні-гра 4: сонні жучки */
+.holes { position:absolute; inset:44px 8px 6px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:10px; }
+.hole { position:relative; border-radius:50% 50% 40% 40%; background:radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.95), rgba(255,255,255,.55) 55%, transparent 72%); }
+.hole .who-in { position:absolute; left:50%; bottom:18%; width:78%; max-width:110px; aspect-ratio:1; transform:translateX(-50%) scale(0); transform-origin:bottom; border-radius:50%; object-fit:cover;
+  border:3px solid #fff; cursor:pointer; transition:transform .18s; background:#fff; }
+.hole .who-in.up { transform:translateX(-50%) scale(1); }
+.hole .who-in.puff { border-color:#636e72; filter:grayscale(.6); }
+.hole .who-in.awake { border-color:var(--gold); box-shadow:0 0 20px var(--gold); }
+#arena.hint .hole .who-in.puff { opacity:.2; }
 
-        /* Screens */
-        #start-screen, #end-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 20, 30, 0.98); z-index: 100;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; pointer-events: auto; padding: 30px; box-sizing: border-box;
-        }
-        .hero-emojis { font-size: 60px; margin-bottom: 20px; animation: bounce 2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+/* міні-гра 5: бос */
+.foe { position:absolute; width:96px; height:96px; border-radius:50%; object-fit:cover; cursor:pointer; transition:left .35s, top .35s, opacity .3s; border:4px solid #dfe6e9; background:#fff; }
+.foe.real { box-shadow:0 0 18px rgba(255,255,255,.7); }
+.foe.decoy { border-color:#2d3436; }
+.foe.hit { animation:shake .3s; }
+#arena.hint .foe.decoy { opacity:.15; }
+#arena.hint .foe.real { box-shadow:0 0 0 6px var(--gold), 0 0 30px var(--gold); }
+.hp { position:absolute; top:22px; left:50%; transform:translateX(-50%); width:70%; height:16px; background:rgba(0,0,0,.6); border-radius:99px; overflow:hidden; border:2px solid #fff; }
+.hp i { display:block; height:100%; background:linear-gradient(90deg,#a29bfe,#dfe6e9); transition:width .25s; }
 
-        /* Click Effect */
-        .click-fx {
-            position: absolute; pointer-events: none; font-size: 30px; 
-            animation: flyUp 0.6s forwards; z-index: 50;
-        }
-        @keyframes flyUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
-
-    </style>
+.fx { position:absolute; pointer-events:none; font-size:30px; font-weight:900; animation:flyUp .7s forwards; z-index:60; text-shadow:0 2px 4px #000; }
+@keyframes flyUp { to { opacity:0; transform:translateY(-60px) scale(1.4); } }
+.banner { position:absolute; left:50%; top:40%; transform:translate(-50%,-50%); z-index:40; background:rgba(0,0,0,.75); padding:14px 22px; border-radius:18px; font-weight:900; font-size:20px; text-align:center; animation:pop .4s; pointer-events:none; }
+.smoke { position:absolute; inset:0; z-index:35; pointer-events:none; background:linear-gradient(120deg, rgba(255,0,0,.25), rgba(255,165,0,.25), rgba(255,255,0,.25), rgba(0,200,0,.25), rgba(0,120,255,.25), rgba(140,0,255,.25)); animation:smoke 1.2s forwards; }
+@keyframes smoke { from { opacity:0; transform:scale(.6); } 40% { opacity:1; } to { opacity:0; transform:scale(1.3); } }
+@media (max-height:640px) { .face { width:50px; height:50px; flex-basis:50px; } .txt { font-size:15px; } .pad { max-width:110px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition:none !important; } }
+</style>
 </head>
 <body>
+<div id="game">
+  <img id="scene-bg" alt="">
+  <div id="scene-shade"></div>
+  <div id="top" hidden>
+    <button class="icon-btn" onclick="toMenu()" aria-label="До карти пригоди">🗺️</button>
+    <div class="lvl" id="lvl-name"></div>
+    <div class="stat p" title="Сила">⚔️ <span id="v-p">0</span></div>
+    <div class="stat k" title="Доброта">❤️ <span id="v-k">0</span></div>
+  </div>
+  <div id="arena"></div>
+  <div id="dlg" hidden></div>
+  <div id="screen" class="screen"></div>
+</div>
 
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
+<script>
+/* ═════════ ресурси (картинки з saga3) ═════════ */
+const R = '../';
+const IMG = {
+  fin: R+'assets/img/heroes/fin.jpg', crash: R+'assets/img/heroes/crash.jpg', luna: R+'assets/img/heroes/luna.jpg',
+  owl: R+'assets/img/friends/owl-pose-s.jpg', hedgehog: R+'assets/img/friends/hedgehog-pose-s.jpg',
+  hedgehogHappy: R+'assets/img/friends/hedgehog-react-s.jpg', granny: R+'assets/img/friends/marmalade_granny-pose-s.jpg',
+  smishynky: R+'assets/img/friends/smishynky-pose-s.jpg',
+  v: (id, a) => `${R}assets/img/villains/${id}-${a ? 'after' : 'before'}-s.jpg`,
+  art: (id) => `${R}assets/img/artifacts/${id}-s.jpg`,
+};
+const WHO = {
+  fin: ['Фін', IMG.fin], crash: ['Краш', IMG.crash], luna: ['Луна', IMG.luna],
+  owl: ['Сова-Всезнайка', IMG.owl], hedgehog: ['Їжачок', IMG.hedgehog], granny: ['Мармеладна бабуся', IMG.granny],
+  zabuvaka: ['Забувака', IMG.v('zabuvaka'), 1], bugs: ['Сонні Жучки', IMG.v('sleepy_bugs'), 1], nanoput: ['НаноПут', IMG.v('nanoput'), 1],
+};
+const HELP = {
+  fin: { name: 'Фін', ico: '🌈', what: 'веселковий дим' },
+  crash: { name: 'Краш', ico: '🔔', what: 'Дзвіночок Радості' },
+  luna: { name: 'Луна', ico: '🔮', what: 'медальйон-підказка' },
+};
 
-        <div id="ui-layer">
-            <div id="top-bar">
-                <div class="stat" style="color:var(--danger)">⚔️ <span id="val-power">0</span></div>
-                <div class="stat" style="color:var(--kindness)">❤️ <span id="val-kind">0</span></div>
-            </div>
+/* ═════════ рівні ═════════ */
+const LEVELS = [
+  { id: 'school', name: 'Школа «ШляхдоМрій»', bg: R+'assets/img/school.jpg', game: 'feelings', art: 'dodaysyl', artName: 'ДодайСил',
+    intro: [
+      ['owl', 'Вітаю на іспиті, юні чарівники! Перед вами ДодайСил — камінь, що спить уже сто років.'],
+      ['crash', 'Може, просто штовхнути його? Дзень-дзелень!'],
+      ['luna', 'Ні, Краше. ДодайСил реагує не на силу, а на щирі почуття.'],
+      ['owl', 'Ловіть теплі слова, що злітають угору, і несіть їх каменю. Сірих буркотливих слів не чіпайте!'],
+    ],
+    choice: ['ДодайСил прокинувся і світиться! Як подякуєте йому?', ['💥 Показати силу', 'Камінь спалахнув яскраво, аж задзвеніли шибки!'], ['🙏 Сказати «дякую»', 'Камінь засяяв м’якою веселкою — і став теплим, як долоня друга.']],
+  },
+  { id: 'forest', name: 'Ліс Шепотів', bg: R+'books/A04/p02-s.jpg', game: 'melody', art: 'bell_tower', artName: 'Дзвін-Всезнайко',
+    intro: [
+      ['hedgehog', 'Ліс Шепотів притих і посмутнів… Я забув Пісню Радості, і Джерело Музики замовкло.'],
+      ['crash', 'Квіти-дзвіночки пам’ятають мелодію! Дивись і слухай, яка квітка заспіває.'],
+      ['luna', 'Повтори мелодію в тому самому порядку. З кожним разом вона стає довшою!'],
+    ],
+    choice: ['Джерело Музики знову дзюрчить! А Їжачок ще соромиться. Що зробиш?', ['🛡️ Захистити від сірого туману', 'Ти став щитом — і туман розступився перед Їжачком.'], ['🎶 Заспівати разом', 'Ви заспівали разом — і Їжачок уперше за довгий час усміхнувся!']],
+    face: 'hedgehogHappy',
+  },
+  { id: 'city', name: 'Місто Солодких Мрій', bg: R+'books/A03/p01-s.jpg', game: 'riddle', art: 'zbyrayznan', artName: 'Книга «ЗбирайЗнань»', villain: 'zabuvaka',
+    intro: [
+      ['granny', 'Ой, лишенько! Забувака переплутав усі рецепти — і тепер цукерки самі собі загадки загадують!'],
+      ['zabuvaka', 'Хі-хі! Ніхто не згадає, скільки важить цукерка. Ніхто-ніхто!'],
+      ['fin', 'Математика — теж чари. Розгадаймо три цукеркові загадки!'],
+    ],
+    choice: ['Забувака розгубився: всі загадки розгадано! Як з ним вчинити?', ['⚔️ Прогнати з міста', 'Забувака втік, загубивши по дорозі власний капелюх.'], ['🤝 Навчити пам’ятати', 'Ви показали Забуваці, як запам’ятовувати, — і він згадав, що колись був кондитером!']],
+  },
+  { id: 'clouds', name: 'Небесні Хмари', bg: R+'books/A05/p03-s.jpg', game: 'bugs', art: 'compass', artName: 'Компас-Хамелеон', villain: 'sleepy_bugs',
+    intro: [
+      ['bugs', 'Хр-р-р… Ми Сонні Жучки… Нам так ліньки… Хай уся СилаВолія спить разом з нами…'],
+      ['luna', 'Через них засинають і квіти, і річки. Треба розбудити жучків!'],
+      ['crash', 'Торкайся жучків, щойно визирнуть із хмарки. А сірі клубки туману — не чіпай, це хитрощі НаноПута!'],
+    ],
+    choice: ['Жучки прокинулися й позіхають. Що далі?', ['📣 Наказати не спати', 'Жучки підскочили й розлетілися по своїх справах.'], ['☀️ Показати світанок', 'Ви показали жучкам світанок — і вони вирішили, що прокидатися — це гарно!']],
+  },
+  { id: 'mountains', name: 'Сирні гори', bg: R+'books/A02/p08-s.jpg', game: 'boss', art: 'farbosvit', artName: 'Олівець «ФарбоСвіт»', villain: 'nanoput', final: true,
+    intro: [
+      ['nanoput', 'Ви дійшли аж до моїх гір? Я — НаноПут! Я стану туманом, тінню, пікселями… Вам мене не впіймати!'],
+      ['luna', 'Він ховається серед Тіней Страху. Справжній НаноПут — сіра хмаринка, що світиться по краях.'],
+      ['fin', 'Торкайся лише справжнього НаноПута! Тіні не чіпай — вони крадуть час.'],
+    ],
+    choice: ['НаноПут ослаб і більше не змінює форми. Останній вибір:', ['⛓️ Зупинити його', 'END_POWER'], ['🌈 Розсмішити його', 'END_KIND']],
+  },
+];
 
-            <div id="action-zone" style="flex-grow: 1; pointer-events: auto;" onclick="handleGlobalClick(event)"></div>
+/* ═════════ збереження ═════════ */
+const KEY = 'sv:sila';
+let save = { stars: {}, arts: [], endings: [] };
+try { Object.assign(save, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} };
 
-            <div id="dialog-box">
-                <div>
-                    <div class="speaker-name" id="speaker">...</div>
-                    <div class="dialog-text" id="text"></div>
-                </div>
-                <div class="choices-container" id="choices"></div>
-            </div>
-        </div>
+/* ═════════ звук ═════════ */
+const AU = {
+  ctx: null,
+  init() { try { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} },
+  tone(f, type = 'sine', d = .2, v = .08) {
+    if (!this.ctx) return;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain(), t = this.ctx.currentTime;
+    o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(t + d);
+  },
+  ok() { this.tone(880, 'triangle', .1, .06); }, bad() { this.tone(160, 'sawtooth', .35, .07); },
+  win() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', .25, .09), i * 110)); },
+  bell() { [1318, 1760, 1318].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', .4, .07), i * 90)); },
+};
 
-        <div id="minigame-layer"></div>
+/* ═════════ стан ═════════ */
+const $ = (id) => document.getElementById(id);
+const S = { power: 0, kind: 0, run: false, lvl: 0, mistakes: 0, used: {}, timers: [], mg: null };
+const later = (fn, ms) => { const t = setTimeout(fn, ms); S.timers.push(t); return t; };
+const every = (fn, ms) => { const t = setInterval(fn, ms); S.timers.push(t); return t; };
+function stopAll() { S.timers.forEach((t) => { clearTimeout(t); clearInterval(t); }); S.timers = []; S.mg = null; $('arena').innerHTML = ''; $('arena').className = ''; }
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
+function fx(x, y, t, color) {
+  const g = $('game').getBoundingClientRect(), el = document.createElement('div');
+  el.className = 'fx'; el.textContent = t; el.style.left = (x - g.left - 12) + 'px'; el.style.top = (y - g.top - 20) + 'px'; if (color) el.style.color = color;
+  $('game').appendChild(el); setTimeout(() => el.remove(), 700);
+}
+function banner(t, ms = 1100) { const b = document.createElement('div'); b.className = 'banner'; b.innerHTML = t; $('game').appendChild(b); setTimeout(() => b.remove(), ms); }
+function addStat(k, v) { S[k] += v; $('v-p').textContent = S.power; $('v-k').textContent = S.kind; }
 
-        <div id="start-screen">
-            <div class="hero-emojis">🐉🐶🐩</div>
-            <h1 style="color:var(--primary); margin:0;">СИЛА ВОЛІЯ</h1>
-            <h3 style="color:var(--secondary); margin-top:5px;">ПОВНА ПРИГОДА</h3>
-            <p style="color:#ccc; font-size:14px; max-width:300px;">
-                Рівень 1: Клікер<br>
-                Рівень 2: Пам'ять<br>
-                Рівень 3: Логіка<br>
-                Рівень 4: Реакція
-            </p>
-            <button class="btn btn-next" style="width:200px; margin-top:20px;" onclick="startGame()">ПОЧАТИ ГРУ</button>
-        </div>
-        
-        <div id="end-screen" style="display: none;">
-            <div class="hero-emojis" id="end-emoji">🏆</div>
-            <h1 id="end-title" style="color:white">ПЕРЕМОГА</h1>
-            <p id="end-desc" style="color:#ccc; margin-bottom:30px;"></p>
-            <button class="btn btn-next" style="width:200px;" onclick="location.reload()">НОВА ГРА</button>
-        </div>
-    </div>
+/* ═════════ меню-карта ═════════ */
+function unlocked(i) { return i === 0 || save.stars[LEVELS[i - 1].id] > 0; }
+function toMenu() {
+  stopAll(); $('game').classList.remove('playing');
+  $('top').hidden = true; $('dlg').hidden = true; $('scene-bg').src = IMG.v('nanoput', true); $('scene-bg').style.opacity = 0;
+  const sc = $('screen'); sc.hidden = false;
+  const total = LEVELS.reduce((s, l) => s + (save.stars[l.id] || 0), 0);
+  sc.innerHTML = `
+    <a class="icon-btn back" href="../school.html" aria-label="Назад до Школи">✕</a>
+    <div class="trio"><img src="${IMG.crash}" alt="Краш"><img src="${IMG.fin}" alt="Фін"><img src="${IMG.luna}" alt="Луна"></div>
+    <h1>СИЛА ВОЛІЯ</h1><h2>ПОВНА ПРИГОДА</h2>
+    <p class="lead">Пройди п’ять місць СилаВолії разом з Фіном, Крашем і Луною, збери артефакти й виріши долю НаноПута. Застряг? Клацни на героя внизу — кожен допоможе один раз за рівень.</p>
+    <div class="lvls">${LEVELS.map((l, i) => {
+      const st = save.stars[l.id] || 0, op = unlocked(i);
+      return `<button class="lvl-card ${op ? '' : 'locked'}" ${op ? `onclick="startLevel(${i}, false)"` : 'disabled'}>
+        <img src="${l.bg}" alt=""><span><b>${i + 1}. ${l.name}</b><small>${op ? GAME_NAMES[l.game] : '🔒 пройди попереднє місце'}</small></span>
+        <span class="st">${'⭐'.repeat(st)}${'<span style="opacity:.3">⭐</span>'.repeat(3 - st)}</span></button>`;
+    }).join('')}</div>
+    <button class="btn gold big-start" onclick="startRun()">${total ? '▶ ПРОЙТИ ВСЮ ПРИГОДУ ЗНОВУ' : '▶ ПОЧАТИ ПРИГОДУ'}</button>
+    <div class="chest"><h3>🎁 Скарбничка: ${save.arts.length} з ${LEVELS.length} · ⭐ ${total} з ${LEVELS.length * 3}</h3>
+      <div class="arts">${LEVELS.map((l) => `<figure class="${save.arts.includes(l.art) ? '' : 'no'}"><img src="${IMG.art(l.art)}" alt=""><figcaption>${save.arts.includes(l.art) ? l.artName : '???'}</figcaption></figure>`).join('')}</div>
+      ${save.endings.length ? `<p class="lead" style="margin-top:12px">Відкриті фінали: ${save.endings.map((e) => e === 'kind' ? '🌈 Герої Радості' : '🛡️ Вартові Сили').join(' · ')}</p>` : ''}
+    </div>`;
+}
+const GAME_NAMES = { feelings: 'Збери теплі слова', melody: 'Повтори мелодію', riddle: 'Цукеркові загадки', bugs: 'Розбуди Сонних Жучків', boss: 'Впіймай НаноПута' };
 
-    <script>
-        // --- AUDIO SYSTEM ---
-        const AudioFX = {
-            ctx: null,
-            init: function() {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-            },
-            playTone: function(freq, type, dur, vol=0.1) {
-                if(!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + dur);
-            },
-            sfxClick: function() { this.playTone(600, 'triangle', 0.05, 0.05); },
-            sfxWin: function() { [400,500,600,800].forEach((f,i)=>setTimeout(()=>this.playTone(f,'sine',0.2,0.1), i*100)); },
-            sfxFail: function() { this.playTone(150, 'sawtooth', 0.5, 0.1); },
-            sfxBossHit: function() { this.playTone(100, 'square', 0.1, 0.1); }
-        };
+function startRun() { AU.init(); S.power = 0; S.kind = 0; addStat('power', 0); startLevel(0, true); }
 
-        // --- GAME CONTENT ---
-        const levels = [
-            {   // Рівень 1
-                name: "Школа", bg: "#2c3e50", enemy: "🔮",
-                steps: [
-                    { sp: "Луна 🐩", txt: "Фіне, твій іспит починається. Цей Артефакт спить вже 100 років." },
-                    { sp: "Краш 🐶", txt: "Він виглядає важким. Може просто штовхнути його?" },
-                    { sp: "Фін 🐉", txt: "Ні, йому потрібна енергія! (Тапай по екрану швидко!)", act: "clicker", target: 10 },
-                    { sp: "Система", txt: "Артефакт вібрує! Обери свій шлях:", choice: true,
-                      opts: [
-                          {t:"💥 Удар (Сила)", type:"power", res:"Ти вдарив по ньому! Він спалахнув.", eff:()=>addStat('p',20)},
-                          {t:"🙏 Прохання (Емпатія)", type:"kind", res:"Ти попросив, і він засяяв.", eff:()=>addStat('k',20)}
-                      ]}
-                ]
-            },
-            {   // Рівень 2
-                name: "Ліс", bg: "#05330e", enemy: "🌲",
-                steps: [
-                    { sp: "Їжачок 🦔", txt: "Ліс Шепотів став злим, бо я забув Пісню Радості..." },
-                    { sp: "Краш 🐶", txt: "Дивись на світлячків! Вони показують ритм!", act: "memory" },
-                    { sp: "Луна 🐩", txt: "Мелодія відновила джерело! Як вчинимо з Їжачком?", choice: true,
-                      opts: [
-                          {t:"⚡ Захистити", type:"power", res:"Ти став щитом для нього.", eff:()=>addStat('p',20)},
-                          {t:"🎶 Співати", type:"kind", res:"Ви заспівали разом!", eff:()=>addStat('k',20)}
-                      ]}
-                ]
-            },
-            {   // Рівень 3
-                name: "Місто", bg: "#6c5ce7", enemy: "👻",
-                steps: [
-                    { sp: "Тінь 👻", txt: "НаноПут наказав заблокувати прохід! Цей цукерковий код незламний!" },
-                    { sp: "Фін 🐉", txt: "Математика – це теж зброя. Я розв'яжу це.", act: "riddle" },
-                    { sp: "Тінь 👻", txt: "Неможливо... Мій код зруйновано!", choice: true,
-                      opts: [
-                          {t:"⚔️ Прогнати", type:"power", res:"Тінь втекла в жаху.", eff:()=>addStat('p',20)},
-                          {t:"🤝 Пробачити", type:"kind", res:"Тінь перейшла на наш бік.", eff:()=>addStat('k',20)}
-                      ]}
-                ]
-            },
-            {   // Рівень 4 (БОС)
-                name: "Фінал", bg: "#2d3436", enemy: "☁️",
-                steps: [
-                    { sp: "НаноПут ☁️", txt: "Ви прийшли дарма. Я поглину вашу радість!" },
-                    { sp: "Всі", txt: "Він занадто швидкий! Ловіть його! (Клікай по НаноПуту)", act: "boss" },
-                    { sp: "Система", txt: "НаноПут ослаб! Останній вибір долі:", choice: true,
-                      opts: [
-                          {t:"⛓️ Ув'язнити (Фінал Воїна)", type:"power", res:"END_POWER", eff:()=>addStat('p',50)},
-                          {t:"🌈 Розсмішити (Фінал Друга)", type:"kind", res:"END_KIND", eff:()=>addStat('k',50)}
-                      ]}
-                ]
-            }
-        ];
+/* ═════════ рівень: діалог → міні-гра → вибір → нагорода ═════════ */
+function startLevel(i, run) {
+  AU.init(); stopAll();
+  if (!run) { S.power = 0; S.kind = 0; addStat('power', 0); }
+  S.run = run; S.lvl = i; S.mistakes = 0; S.used = {};
+  const L = LEVELS[i];
+  $('screen').hidden = true; $('top').hidden = false; $('dlg').hidden = false;
+  $('lvl-name').textContent = `${i + 1}/${LEVELS.length} · ${L.name}`;
+  const bg = $('scene-bg'); bg.style.opacity = 0; bg.src = L.bg; bg.onload = () => { bg.style.opacity = 1; };
+  $('game').classList.remove('playing'); void $('game').offsetWidth; $('game').classList.add('playing');
+  dialog(L.intro, 0, () => GAMES[L.game]());
+}
 
-        // --- STATE MANAGEMENT ---
-        const state = {
-            power: 0, kind: 0,
-            lvlIdx: 0, stepIdx: 0,
-            actType: null, actTarget: 0, actCurrent: 0,
-            // Mini-game specific
-            memSeq: [], memIdx: 0,
-            bossTimer: null, bossTimeLeft: 0
-        };
+let typing = null;
+function say(who, text, extra) {
+  const [name, img, vil] = WHO[who];
+  $('dlg').innerHTML = `<div class="say" onclick="skipType()"><img class="face ${vil ? 'villain' : ''}" src="${img}" alt=""><div style="flex:1"><div class="who">${name}</div><div class="txt" id="txt"></div></div></div>${extra || ''}`;
+  const el = $('txt'); let k = 0; clearInterval(typing);
+  typing = setInterval(() => { k += 2; el.textContent = text.slice(0, k); if (k >= text.length) { clearInterval(typing); typing = null; } }, 22);
+  el.dataset.full = text; fitArena();
+}
+function skipType() { if (typing) { clearInterval(typing); typing = null; $('txt').textContent = $('txt').dataset.full; } }
+function fitArena() { requestAnimationFrame(() => $('arena').style.setProperty('--dlg-h', $('dlg').offsetHeight + 'px')); }
 
-        // --- VISUALS (CANVAS) ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, particles = [], enemyChar = "";
+function dialog(lines, k, done) {
+  if (k >= lines.length) return done();
+  const [who, text] = lines[k];
+  say(who, text, `<div class="row"><button class="btn next" id="nx">ДАЛІ ▶</button></div>`);
+  $('nx').onclick = () => { if (typing) return skipType(); AU.ok(); dialog(lines, k + 1, done); };
+}
 
-        function resize() {
-            width = canvas.width = document.getElementById('game-container').offsetWidth;
-            height = canvas.height = document.getElementById('game-container').offsetHeight;
-        }
-        window.addEventListener('resize', resize); resize();
+/* підказка під час міні-гри: інструкція + кнопки героїв */
+function playPanel(who, text) {
+  const mg = S.mg || {};
+  const btns = ['fin', 'crash', 'luna'].map((h) => {
+    const can = mg.help && mg.help[h] && !S.used[h];
+    return `<button class="hlp" id="h-${h}" ${can ? '' : 'disabled'} title="${HELP[h].name}: ${HELP[h].what}" aria-label="${HELP[h].name}: ${HELP[h].what}"><img src="${IMG[h]}" alt=""><span>${HELP[h].ico}</span></button>`;
+  }).join('');
+  say(who, text, `<div class="helpers"><small>Допомога:</small>${btns}</div>`);
+  ['fin', 'crash', 'luna'].forEach((h) => { const b = $('h-' + h); if (!b.disabled) b.onclick = () => useHelp(h); });
+}
+function useHelp(h) {
+  if (S.used[h] || !S.mg || !S.mg.help[h]) return;
+  S.used[h] = true; $('h-' + h).disabled = true;
+  if (h === 'fin') { const s = document.createElement('div'); s.className = 'smoke'; $('game').appendChild(s); setTimeout(() => s.remove(), 1200); }
+  if (h === 'crash') AU.bell(); else AU.win();
+  banner(`${HELP[h].ico} ${HELP[h].name}: ${S.mg.help[h].label}`);
+  S.mg.help[h].run();
+}
 
-        function render() {
-            // Background
-            ctx.fillStyle = levels[state.lvlIdx] ? levels[state.lvlIdx].bg : "#000";
-            ctx.fillRect(0,0,width,height);
-            
-            // Particles
-            if(Math.random()>0.9) particles.push({x:Math.random()*width, y:height, s:Math.random()*5, c:"rgba(255,255,255,0.3)"});
-            particles.forEach((p,i)=>{
-                p.y -= 2; ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.s,0,Math.PI*2); ctx.fill();
-                if(p.y<0) particles.splice(i,1);
-            });
+/* таймер з можливістю «заморозити» (Дзвіночок Краша) */
+function timer(secs, onEnd) {
+  const bar = document.createElement('div'); bar.className = 'timerbar'; bar.innerHTML = '<i></i>'; $('arena').appendChild(bar);
+  const T = { left: secs, frozen: 0 };
+  every(() => {
+    if (!S.mg) return;
+    if (T.frozen > 0) { T.frozen -= .1; bar.classList.toggle('frozen', T.frozen > 0); return; }
+    T.left -= .1; bar.firstChild.style.width = Math.max(0, T.left / secs * 100) + '%';
+    if (T.left <= 0) { const m = S.mg; S.mg = null; onEnd(m); }
+  }, 100);
+  T.freeze = (s) => { T.frozen = s; bar.classList.add('frozen'); };
+  T.add = (s) => { T.left = Math.min(secs, T.left + s); };
+  return T;
+}
+function goal(t) { let g = $('arena').querySelector('.goal'); if (!g) { g = document.createElement('div'); g.className = 'goal'; $('arena').appendChild(g); } g.innerHTML = t; }
+function hint(ms) { $('arena').classList.add('hint'); later(() => $('arena').classList.remove('hint'), ms); }
 
-            // Characters
-            let bounce = Math.sin(Date.now()/300)*10;
-            ctx.font = "80px Arial"; ctx.textAlign="center"; 
-            ctx.fillText("🐉", width/2-60, height/2+bounce);
-            ctx.font = "50px Arial";
-            ctx.fillText("🐶", width/2-110, height/2+30+bounce);
-            ctx.fillText("🐩", width/2-140, height/2-40+bounce);
+function fail(msg) {
+  stopAll(); AU.bad();
+  say('luna', msg + ' Нічого страшного — герої не здаються!', `<div class="row"><button class="btn gold" id="again">↻ ЩЕ РАЗ</button></div>`);
+  $('again').onclick = () => { S.mistakes++; GAMES[LEVELS[S.lvl].game](); };
+}
 
-            if(enemyChar && state.actType !== 'boss') { // Hide enemy during boss fight (it's a DOM element)
-                let eb = Math.cos(Date.now()/250)*15;
-                ctx.font = "100px Arial";
-                ctx.fillText(enemyChar, width/2+80, height/2+eb);
-            }
-            requestAnimationFrame(render);
-        }
+/* ═════════ 1. Теплі слова для ДодайСилу ═════════ */
+const WARM = ['Дякую!', 'Ти молодчинка!', 'Вибач', 'Давай разом!', 'Я поруч', 'Радію за тебе', 'Обіймашки!', 'Будь ласка', 'Я тебе чую', 'Дружимо!', 'Не бійся', 'Ти зможеш!'];
+const GREY = ['Відчепись!', 'Нудно…', 'Не заважай!', 'Ну і що?', 'Моє!', 'Бу-бу-бу', 'Сам винен', 'Не хочу!'];
+const GAMES = {};
+GAMES.feelings = function () {
+  stopAll();
+  const NEED = 10; let got = 0, rainbow = false;
+  const A = $('arena');
+  A.insertAdjacentHTML('beforeend', `<div class="stone" id="stone"><img src="${IMG.art('dodaysyl')}" alt="ДодайСил"></div>`);
+  const glow = () => { const s = $('stone'), p = got / NEED; s.style.setProperty('--sat', .3 + p * .9); s.style.setProperty('--br', .75 + p * .45); s.style.setProperty('--glow', p * 60); };
+  glow(); goal(`💛 Теплих слів: 0 / ${NEED}`);
+  S.mg = { help: {
+    fin: { label: 'сірі слова стали теплими!', run: () => { rainbow = true; A.querySelectorAll('.bubble.bad').forEach(mkGood); later(() => { rainbow = false; }, 5000); } },
+    crash: { label: 'час зупинився!', run: () => T.freeze(5) },
+    luna: { label: 'тепер видно, де щирі слова', run: () => hint(6000) },
+  } };
+  const T = timer(30, () => fail('Ой, камінь ще не прокинувся.'));
+  playPanel('owl', 'Торкайся теплих слів! Сірі буркотливі слова гасять камінь.');
+  function mkGood(b) { b.className = 'bubble good'; b.textContent = WARM[rnd(0, WARM.length - 1)]; b.dataset.good = 1; }
+  const spawn = () => {
+    if (!S.mg) return;
+    const good = rainbow || Math.random() < .62, b = document.createElement('div');
+    b.className = 'bubble ' + (good ? 'good' : 'bad'); b.dataset.good = good ? 1 : '';
+    b.textContent = good ? WARM[rnd(0, WARM.length - 1)] : GREY[rnd(0, GREY.length - 1)];
+    const h = A.offsetHeight; b.style.setProperty('--h', (h + 80) + 'px'); b.style.left = rnd(4, 62) + '%';
+    b.style.animationDuration = (rnd(42, 60) / 10) + 's';
+    b.onpointerdown = (e) => {
+      if (!S.mg) return;
+      if (b.dataset.good) { got++; AU.ok(); fx(e.clientX, e.clientY, '💛'); }
+      else { got = Math.max(0, got - 1); S.mistakes++; AU.bad(); fx(e.clientX, e.clientY, '☁️ −1', '#dfe6e9'); }
+      b.remove(); glow(); goal(`💛 Теплих слів: ${got} / ${NEED}`);
+      if (got >= NEED) { S.mg = null; later(levelWon, 500); }
+    };
+    b.addEventListener('animationend', () => b.remove());
+    A.appendChild(b);
+  };
+  spawn(); every(spawn, 750);
+};
 
-        // --- LOGIC FLOW ---
-        function startGame() {
-            AudioFX.init();
-            document.getElementById('start-screen').style.display = 'none';
-            state.lvlIdx = 0; state.stepIdx = 0;
-            loadStep(); render();
-        }
+/* ═════════ 2. Пісня Радості (мелодія) ═════════ */
+GAMES.melody = function () {
+  stopAll();
+  const PADS = [['#ff6b9d', 523, '🌸'], ['#feca57', 659, '🌼'], ['#48dbfb', 784, '💠'], ['#1dd1a1', 988, '🍀']];
+  const LENS = [3, 4, 5]; let round = 0, seq = [], pos = 0, busy = true, speed = 650;
+  const A = $('arena');
+  A.insertAdjacentHTML('beforeend', `<div class="pads locked" id="pads">${PADS.map((p, i) => `<button class="pad" id="pad${i}" style="background:${p[0]};color:${p[0]}" aria-label="Квітка ${i + 1}">${p[2]}</button>`).join('')}</div>`);
+  const lit = (i) => { const el = $('pad' + i); if (!el) return; el.classList.add('lit'); AU.tone(PADS[i][1], 'sine', .35, .1); later(() => el.classList.remove('lit'), speed * .55); };
+  const play = () => {
+    busy = true; pos = 0; $('pads').classList.add('locked'); goal(`🎵 Мелодія ${round + 1} з ${LENS.length} · слухай…`);
+    seq.forEach((p, k) => later(() => lit(p), 500 + k * speed));
+    later(() => { busy = false; $('pads').classList.remove('locked'); goal(`🎵 Мелодія ${round + 1} з ${LENS.length} · твоя черга!`); }, 500 + seq.length * speed);
+  };
+  const newRound = () => { while (seq.length < LENS[round]) seq.push(rnd(0, 3)); play(); };
+  S.mg = { help: {
+    luna: { label: 'мелодія звучить ще раз', run: () => { if (!busy) play(); else later(play, 1500); } },
+    crash: { label: 'мелодія повільніша', run: () => { speed = 1000; if (!busy) play(); } },
+    fin: { label: 'підсвічує наступну квітку', run: () => { const el = $('pad' + seq[pos]); if (el) { el.classList.add('tip'); later(() => el.classList.remove('tip'), 1600); } } },
+  } };
+  PADS.forEach((_, i) => { $('pad' + i).onpointerdown = () => {
+    if (busy || !S.mg) return;
+    lit(i);
+    if (i !== seq[pos]) { S.mistakes++; AU.bad(); banner('Ой, не та квітка! Послухай ще раз 🎵', 1000); busy = true; later(play, 1100); return; }
+    pos++;
+    if (pos >= seq.length) {
+      busy = true; round++;
+      if (round >= LENS.length) { S.mg = null; later(levelWon, 700); }
+      else { banner('✨ Чудово!', 800); later(newRound, 1100); }
+    }
+  }; });
+  playPanel('hedgehog', 'Послухай, які квіти співають, і натисни їх у тому ж порядку.');
+  newRound();
+};
 
-        function loadStep() {
-            const lvl = levels[state.lvlIdx];
-            const step = lvl.steps[state.stepIdx];
-            
-            enemyChar = lvl.enemy;
-            document.getElementById('speaker').innerText = step.sp;
-            document.getElementById('text').innerText = step.txt;
-            document.getElementById('choices').innerHTML = "";
-            document.getElementById('minigame-layer').style.display = 'none';
-            document.getElementById('minigame-layer').innerHTML = ""; // Clear old games
+/* ═════════ 3. Цукеркові загадки ═════════ */
+GAMES.riddle = function () {
+  stopAll();
+  const CANDY = ['🍭', '🍬', '🍩', '🧁', '🍪', '🍫'];
+  const make = () => {
+    const [x, y] = shuffle(CANDY).slice(0, 2), a = rnd(3, 9), b = rnd(1, a - 1), t = rnd(0, 2);
+    if (t === 0) return { lines: [`${x} + ${x} = ${2 * a}`, `${x} − ${y} = ${a - b}`], ask: `${y} = ?`, ans: b, x, a };
+    if (t === 1) return { lines: [`${x} + ${x} + ${x} = ${3 * a}`, `${x} + ${y} = ${a + b}`], ask: `${y} = ?`, ans: b, x, a };
+    return { lines: [`${x} + ${x} = ${2 * a}`, `${y} + ${y} = ${2 * b}`], ask: `${x} + ${y} = ?`, ans: a + b, x, a };
+  };
+  let n = 0, R;
+  const A = $('arena');
+  const show = () => {
+    R = make();
+    const opts = new Set([R.ans]); while (opts.size < 3) { const v = R.ans + rnd(-4, 4); if (v > 0 && v !== R.ans) opts.add(v); }
+    A.innerHTML = `<div class="riddle"><div class="n">ЗАГАДКА ${n + 1} З 3</div>${R.lines.map((l) => `<div class="eq">${l}</div>`).join('')}
+      <div class="eq ask">${R.ask}</div><div class="opts">${shuffle([...opts]).map((v) => `<button class="opt" data-v="${v}">${v}</button>`).join('')}</div><div class="reveal" id="reveal"></div></div>`;
+    A.querySelectorAll('.opt').forEach((b) => b.onclick = () => {
+      if (+b.dataset.v === R.ans) {
+        AU.win(); n++;
+        if (n >= 3) { S.mg = null; later(levelWon, 600); } else { banner('🍬 Правильно!', 800); later(show, 900); }
+      } else { S.mistakes++; AU.bad(); b.classList.add('wrong'); b.disabled = true; }
+    });
+  };
+  S.mg = { help: {
+    luna: { label: 'одна неправильна відповідь зникла', run: () => { const w = [...A.querySelectorAll('.opt')].filter((b) => +b.dataset.v !== R.ans && !b.disabled); if (w[0]) w[0].classList.add('gone'); } },
+    fin: { label: 'дим показав першу цукерку', run: () => { $('reveal').textContent = `🌈 ${R.x} = ${R.a}`; } },
+  } };
+  show();
+  playPanel('granny', 'Кожна однакова цукерка важить однаково. Порахуй, скільки важить та, що зі знаком питання!');
+};
 
-            state.actType = step.act || null;
-            state.actTarget = step.target || 0;
-            state.actCurrent = 0;
+/* ═════════ 4. Розбуди Сонних Жучків ═════════ */
+GAMES.bugs = function () {
+  stopAll();
+  const NEED = 12; let woke = 0, clear = false;
+  const A = $('arena');
+  A.insertAdjacentHTML('beforeend', `<div class="holes">${[0, 1, 2, 3, 4, 5].map((i) => `<div class="hole"><img class="who-in" id="hole${i}" alt=""></div>`).join('')}</div>`);
+  goal(`🐞 Розбуджено: 0 / ${NEED}`);
+  const T = timer(30, () => fail('Жучки знову поснули.'));
+  const wake = (el, e) => {
+    el.classList.add('awake'); el.src = IMG.v('sleepy_bugs', true); el.dataset.kind = 'done';
+    woke++; AU.ok(); if (e) fx(e.clientX, e.clientY, '☀️');
+    goal(`🐞 Розбуджено: ${Math.min(woke, NEED)} / ${NEED}`);
+    later(() => hide(el), 450);
+    if (woke >= NEED && S.mg) { S.mg = null; later(levelWon, 600); }
+  };
+  const hide = (el) => { el.classList.remove('up', 'awake', 'puff'); el.dataset.kind = ''; };
+  S.mg = { help: {
+    crash: { label: 'дзвіночок розбудив усіх, хто визирнув!', run: () => A.querySelectorAll('.who-in.up').forEach((el) => { if (el.dataset.kind === 'bug') wake(el); }) },
+    fin: { label: 'дим розвіяв сірий туман', run: () => { clear = true; A.querySelectorAll('.who-in.puff').forEach(hide); later(() => { clear = false; }, 7000); } },
+    luna: { label: 'медальйон зупинив час', run: () => T.freeze(5) },
+  } };
+  every(() => {
+    if (!S.mg) return;
+    const free = [0, 1, 2, 3, 4, 5].map((i) => $('hole' + i)).filter((el) => !el.dataset.kind);
+    if (!free.length) return;
+    const el = free[rnd(0, free.length - 1)], puff = !clear && Math.random() < .3;
+    el.dataset.kind = puff ? 'puff' : 'bug'; el.src = puff ? IMG.v('nanoput') : IMG.v('sleepy_bugs');
+    el.classList.toggle('puff', puff); el.classList.add('up');
+    const stay = puff ? 1500 : rnd(1100, 1600);
+    later(() => { if (el.dataset.kind === 'bug' || el.dataset.kind === 'puff') hide(el); }, stay);
+  }, 620);
+  A.querySelectorAll('.who-in').forEach((el) => el.onpointerdown = (e) => {
+    if (!S.mg || !el.classList.contains('up')) return;
+    if (el.dataset.kind === 'bug') wake(el, e);
+    else if (el.dataset.kind === 'puff') { S.mistakes++; AU.bad(); T.add(-3); fx(e.clientX, e.clientY, '−3 с', '#dfe6e9'); hide(el); }
+  });
+  playPanel('crash', 'Торкайся жучків, що визирають із хмаринок! Сірий туман забирає час.');
+};
 
-            if (state.actType === 'clicker') {
-                document.getElementById('text').innerText += ` (0/${state.actTarget})`;
-            } 
-            else if (state.actType === 'memory') initMemoryGame();
-            else if (state.actType === 'riddle') initRiddleGame();
-            else if (state.actType === 'boss') initBossBattle();
-            else if (step.choice) {
-                step.opts.forEach(o => createBtn(o.t, `btn-${o.type}`, () => makeChoice(o)));
-            } else {
-                createBtn("ДАЛІ ▶", "btn-next", nextStep);
-            }
-        }
+/* ═════════ 5. Бос: НаноПут ═════════ */
+GAMES.boss = function () {
+  stopAll();
+  const HP = 12; let hp = HP, still = false;
+  const A = $('arena');
+  A.insertAdjacentHTML('beforeend', `<div class="hp"><i id="hpbar"></i></div>`);
+  const real = document.createElement('img'); real.className = 'foe real'; real.src = IMG.v('nanoput'); real.alt = 'НаноПут';
+  const decoys = [0, 1, 2].map(() => { const d = document.createElement('img'); d.className = 'foe decoy'; d.src = IMG.v('fear_shadows'); d.alt = 'Тінь Страху'; return d; });
+  [real, ...decoys].forEach((el) => A.appendChild(el));
+  const place = (el) => { el.style.left = rnd(2, 76) + '%'; el.style.top = rnd(14, 74) + '%'; };
+  const shuffleAll = () => { if (!still) [real, ...decoys].forEach(place); };
+  shuffleAll();
+  const T = timer(35, () => fail('НаноПут утік у туман!'));
+  const hit = (n, e) => {
+    hp = Math.max(0, hp - n); $('hpbar').style.width = (hp / HP * 100) + '%';
+    real.classList.remove('hit'); void real.offsetWidth; real.classList.add('hit');
+    AU.tone(140, 'square', .12, .08); if (e) fx(e.clientX, e.clientY, n > 1 ? '🌈 −' + n : '💥');
+    if (hp <= 0) { S.mg = null; real.src = IMG.v('nanoput', true); decoys.forEach((d) => d.remove()); later(levelWon, 900); }
+    else place(real);
+  };
+  S.mg = { help: {
+    fin: { label: 'веселковий дим: −3 НаноПуту!', run: () => hit(3) },
+    crash: { label: 'дзвіночок зупинив НаноПута', run: () => { still = true; T.freeze(4); later(() => { still = false; }, 4000); } },
+    luna: { label: 'медальйон показує справжнього', run: () => hint(6000) },
+  } };
+  real.onpointerdown = (e) => { if (S.mg) hit(1, e); };
+  decoys.forEach((d) => d.onpointerdown = (e) => { if (!S.mg) return; S.mistakes++; AU.bad(); T.add(-2); fx(e.clientX, e.clientY, '−2 с', '#dfe6e9'); place(d); });
+  every(() => { if (S.mg) shuffleAll(); }, 1300);
+  playPanel('fin', 'Торкайся справжнього НаноПута — сірої хмаринки! Тіні Страху крадуть час.');
+};
 
-        function createBtn(txt, cls, onClick) {
-            const btn = document.createElement('button');
-            btn.className = `btn ${cls}`; btn.innerText = txt; btn.onclick = onClick;
-            document.getElementById('choices').appendChild(btn);
-        }
+/* ═════════ перемога на рівні ═════════ */
+function levelWon() {
+  stopAll(); AU.win();
+  const L = LEVELS[S.lvl], stars = S.mistakes === 0 ? 3 : S.mistakes <= 2 ? 2 : 1;
+  save.stars[L.id] = Math.max(save.stars[L.id] || 0, stars); if (!save.arts.includes(L.art)) save.arts.push(L.art); persist();
+  S.lastStars = stars;
+  const [q, p, k] = L.choice;
+  say(L.villain && !L.final ? L.villain === 'sleepy_bugs' ? 'bugs' : L.villain : 'luna', q,
+    `<div class="row"><button class="btn power" id="cp">${p[0]}</button><button class="btn kind" id="ck">${k[0]}</button></div>`);
+  $('cp').onclick = () => choose('power', p[1]);
+  $('ck').onclick = () => choose('kind', k[1]);
+}
+function choose(type, res) {
+  AU.ok(); addStat(type, LEVELS[S.lvl].final ? 50 : 20);
+  if (res.startsWith('END')) return ending(type);
+  const L = LEVELS[S.lvl];
+  if (L.villain) {
+    // лиходій змінюється: «до» → «після»
+    $('arena').innerHTML = `<div class="morph" style="margin-top:30px"><img src="${IMG.v(L.villain)}" alt=""><img class="after" src="${IMG.v(L.villain, true)}" alt=""></div>`;
+  }
+  say(L.face ? 'hedgehog' : 'luna', res, `<div class="row"><button class="btn gold" id="go">🎁 ЗАБРАТИ АРТЕФАКТ</button></div>`);
+  if (L.face) $('dlg').querySelector('.face').src = IMG[L.face];
+  $('go').onclick = reward;
+}
+function reward() {
+  stopAll();
+  const L = LEVELS[S.lvl], st = S.lastStars, last = S.lvl >= LEVELS.length - 1;
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `<h2 style="margin-top:10px">МІСЦЕ ПРОЙДЕНО</h2><h1>${L.name}</h1>
+    <div class="stars-big">${[0, 1, 2].map((i) => `<span class="${i < st ? '' : 'off'}" style="animation-delay:${.2 + i * .25}s">⭐</span>`).join('')}</div>
+    <p class="lead">${st === 3 ? 'Бездоганно!' : st === 2 ? 'Чудово! Ще трохи — і буде три зірки.' : 'Пройдено! Спробуй ще раз на три зірки.'}</p>
+    <img class="win-art" src="${IMG.art(L.art)}" alt=""><p class="lead"><b style="color:var(--gold)">Новий артефакт:</b> ${L.artName}</p>
+    ${S.run && !last ? `<button class="btn gold big-start" onclick="startLevel(${S.lvl + 1}, true)">▶ ДАЛІ: ${LEVELS[S.lvl + 1].name}</button>` : ''}
+    ${!S.run && !last && unlocked(S.lvl + 1) ? `<button class="btn gold big-start" onclick="startLevel(${S.lvl + 1}, false)">▶ НАСТУПНЕ МІСЦЕ</button>` : ''}
+    <button class="btn next big-start" onclick="startLevel(${S.lvl}, ${S.run})">${st < 3 ? '↻ ПЕРЕГРАТИ НА ⭐⭐⭐' : '↻ ЗІГРАТИ ЩЕ РАЗ'}</button>
+    <button class="btn next big-start" style="background:rgba(255,255,255,.12)" onclick="toMenu()">🗺️ КАРТА ПРИГОДИ</button>`;
+}
 
-        function nextStep() {
-            AudioFX.sfxClick();
-            state.stepIdx++;
-            loadStep();
-        }
+/* ═════════ фінали ═════════ */
+function ending(type) {
+  stopAll();
+  const L = LEVELS[S.lvl], st = S.lastStars;
+  if (!save.endings.includes(type)) save.endings.push(type); persist();
+  const kind = type === 'kind';
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `<h2 style="margin-top:6px">${kind ? 'ШЛЯХ ДРУЖБИ' : 'ШЛЯХ ВОЇНА'}</h2><h1>${kind ? 'ГЕРОЇ РАДОСТІ' : 'ВАРТОВІ СИЛИ'}</h1>
+    ${kind
+      ? `<div class="morph"><img src="${IMG.v('nanoput')}" alt=""><img class="after" src="${IMG.v('nanoput', true)}" alt="НаноПут — добра хмаринка"></div>
+         <p class="lead">Фін видихнув веселковий дим, Краш задзвенів дзвіночком, Луна засміялася — і НаноПут уперше в житті теж засміявся! Сіра хмаринка стала світлою, а над Сирними горами розквітла веселка.</p>`
+      : `<img class="win-art" src="${IMG.v('nanoput')}" alt="" style="filter:grayscale(.6)">
+         <p class="lead">Ви зупинили НаноПута, і в СилаВолії знову спокій. Але сіра хмаринка не зникла назовсім: вона й далі шукає місця, де збирається смуток… Може, наступного разу спробувати шлях дружби?</p>`}
+    <div class="stars-big">${[0, 1, 2].map((i) => `<span class="${i < st ? '' : 'off'}" style="animation-delay:${.2 + i * .25}s">⭐</span>`).join('')}</div>
+    <p class="lead">⚔️ Сила: <b>${S.power}</b> · ❤️ Доброта: <b>${S.kind}</b><br>${S.kind > S.power ? 'Твоє серце — найсильніша чарівна сила!' : S.kind === S.power ? 'Ти знаєш, коли потрібна сила, а коли — доброта.' : 'Сміливості тобі не бракує! А доброта теж уміє перемагати.'}</p>
+    <img class="win-art" src="${IMG.art(L.art)}" alt="" style="width:110px;height:110px"><p class="lead"><b style="color:var(--gold)">Артефакт:</b> ${L.artName}</p>
+    <button class="btn gold big-start" onclick="toMenu()">🗺️ КАРТА ПРИГОДИ</button>
+    <button class="btn next big-start" onclick="startRun()">↻ НОВА ПРИГОДА</button>`;
+  AU.win();
+}
 
-        function addStat(type, val) {
-            if(type==='p') state.power += val; else state.kind += val;
-            document.getElementById('val-power').innerText = state.power;
-            document.getElementById('val-kind').innerText = state.kind;
-        }
-
-        function makeChoice(opt) {
-            opt.eff();
-            if(opt.res.includes("END")) return showEnd(opt.res);
-            document.getElementById('text').innerText = opt.res;
-            document.getElementById('choices').innerHTML = "";
-            createBtn("ПРОДОВЖИТИ ▶", "btn-next", () => {
-                state.lvlIdx++; state.stepIdx=0;
-                if(state.lvlIdx >= levels.length) showEnd("WIN"); else loadStep();
-            });
-        }
-
-        // --- LEVEL 1: CLICKER ---
-        function handleGlobalClick(e) {
-            if(state.actType !== 'clicker') return;
-            state.actCurrent++;
-            AudioFX.sfxClick();
-            showFx(e.clientX, e.clientY, "⚡");
-            
-            document.getElementById('text').innerText = 
-                levels[state.lvlIdx].steps[state.stepIdx].txt + ` (${state.actCurrent}/${state.actTarget})`;
-            
-            if(state.actCurrent >= state.actTarget) {
-                state.actType = null;
-                nextStep();
-            }
-        }
-
-        function showFx(x, y, char) {
-            const el = document.createElement('div'); el.className = 'click-fx';
-            el.innerText = char; el.style.left = x+'px'; el.style.top = y+'px';
-            document.body.appendChild(el); setTimeout(()=>el.remove(), 600);
-        }
-
-        // --- LEVEL 2: MEMORY ---
-        function initMemoryGame() {
-            const layer = document.getElementById('minigame-layer');
-            layer.style.display = 'flex';
-            layer.innerHTML = `
-                <div class="memory-grid">
-                    <div id="m0" class="mem-btn" style="background:#ff4757" onclick="memClick(0)"></div>
-                    <div id="m1" class="mem-btn" style="background:#2ed573" onclick="memClick(1)"></div>
-                    <div id="m2" class="mem-btn" style="background:#3742fa" onclick="memClick(2)"></div>
-                    <div id="m3" class="mem-btn" style="background:#ffa502" onclick="memClick(3)"></div>
-                </div>`;
-            
-            state.memSeq = [0, 2, 1, 3];
-            state.memIdx = 0;
-            
-            let i=0;
-            const iv = setInterval(()=>{
-                if(i>=state.memSeq.length) { clearInterval(iv); return; }
-                flashMem(state.memSeq[i]); i++;
-            }, 800);
-        }
-
-        function flashMem(id) {
-            const el = document.getElementById('m'+id);
-            el.classList.add('lit'); AudioFX.playTone(300+id*100, 'sine', 0.2);
-            setTimeout(()=>el.classList.remove('lit'), 400);
-        }
-
-        window.memClick = (id) => {
-            flashMem(id);
-            if(id === state.memSeq[state.memIdx]) {
-                state.memIdx++;
-                if(state.memIdx >= state.memSeq.length) {
-                    setTimeout(()=>{ AudioFX.sfxWin(); nextStep(); }, 500);
-                }
-            } else {
-                AudioFX.sfxFail(); state.memIdx = 0; // Reset
-            }
-        }
-
-        // --- LEVEL 3: RIDDLE ---
-        function initRiddleGame() {
-            const layer = document.getElementById('minigame-layer');
-            layer.style.display = 'flex';
-            layer.innerHTML = `
-                <div class="riddle-box">
-                    <div class="riddle-eq">🍭 + 🍭 = 12</div>
-                    <div class="riddle-eq">🍭 - 🍬 = 2</div>
-                    <div class="riddle-eq">🍬 = ?</div>
-                    <div class="riddle-opts">
-                        <button class="riddle-btn" onclick="chkRiddle(4)">4</button>
-                        <button class="riddle-btn" onclick="chkRiddle(6)">6</button>
-                        <button class="riddle-btn" onclick="chkRiddle(2)">2</button>
-                    </div>
-                </div>`;
-        }
-        window.chkRiddle = (ans) => {
-            // 🍭=6, 6-🍬=2 => 🍬=4
-            if(ans === 4) { AudioFX.sfxWin(); nextStep(); } 
-            else { AudioFX.sfxFail(); alert("Спробуй ще!"); }
-        }
-
-        // --- LEVEL 4: BOSS BATTLE (Whac-A-Mole) ---
-        function initBossBattle() {
-            const layer = document.getElementById('minigame-layer');
-            layer.style.display = 'block'; // Block allows absolute positioning inside
-            state.actCurrent = 0;
-            state.actTarget = 10;
-            state.bossTimeLeft = 15;
-            
-            layer.innerHTML = `<div class="boss-timer" id="boss-timer">15.00</div>`;
-            
-            const boss = document.createElement('div');
-            boss.id = 'boss-target';
-            boss.innerText = "☁️";
-            boss.onclick = hitBoss;
-            layer.appendChild(boss);
-            
-            moveBoss();
-
-            if(state.bossTimer) clearInterval(state.bossTimer);
-            state.bossTimer = setInterval(() => {
-                state.bossTimeLeft -= 0.1;
-                document.getElementById('boss-timer').innerText = state.bossTimeLeft.toFixed(2);
-                if(state.bossTimeLeft <= 0) {
-                    clearInterval(state.bossTimer);
-                    alert("НаноПут втік! Спробуй ще раз.");
-                    initBossBattle(); // Restart
-                }
-            }, 100);
-        }
-
-        function moveBoss() {
-            const boss = document.getElementById('boss-target');
-            // Random pos within 80% of layer
-            const x = Math.random() * 80 + 10; 
-            const y = Math.random() * 60 + 10;
-            boss.style.left = x + '%';
-            boss.style.top = y + '%';
-        }
-
-        window.hitBoss = (e) => {
-            e.stopPropagation(); // Stop bubbling
-            AudioFX.sfxBossHit();
-            state.actCurrent++;
-            showFx(e.clientX, e.clientY, "💥");
-            
-            if(state.actCurrent >= state.actTarget) {
-                clearInterval(state.bossTimer);
-                document.getElementById('boss-target').remove();
-                nextStep();
-            } else {
-                moveBoss();
-            }
-        }
-
-        // --- ENDING ---
-        function showEnd(type) {
-            const scr = document.getElementById('end-screen');
-            scr.style.display = 'flex';
-            const title = document.getElementById('end-title');
-            const desc = document.getElementById('end-desc');
-            const emoji = document.getElementById('end-emoji');
-            
-            AudioFX.sfxWin();
-
-            if(type === "END_POWER") {
-                title.innerText = "ВАРТОВІ СИЛИ";
-                desc.innerText = "Ви закували НаноПута в кайдани. Спокій повернувся, але ціною свободи. (Шлях Воїна)";
-                emoji.innerText = "🛡️";
-                document.body.style.background = "#2d3436";
-            } else {
-                title.innerText = "ГЕРОЇ РАДОСТІ";
-                desc.innerText = "Сміх розвіяв темряву! НаноПут став доброю хмаринкою. Світ сяє! (Шлях Дружби)";
-                emoji.innerText = "🌈";
-                document.body.style.background = "#fd79a8";
-            }
-        }
-
-    </script>
+toMenu();
+</script>
 </body>
 </html>

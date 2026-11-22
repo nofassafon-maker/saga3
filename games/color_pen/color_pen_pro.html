@@ -1,583 +1,367 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Тінь ФарбоСвіту: MP3 Edition</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тінь ФарбоСвіту</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+:root { --gold:#ffd23f; --magic:#6746A1; --lav:#c9b8f2; --power:#ff6b6b; --kind:#2ed573; --smart:#ffa502; --ink:#1d1530; --panel:rgba(22,15,40,.94); }
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { font-family:'Nunito',sans-serif; background:#110b1f; color:#fff; display:flex; justify-content:center; align-items:center; user-select:none; -webkit-tap-highlight-color:transparent; }
+[hidden] { display:none !important; }
+button { font-family:inherit; }
+#game { position:relative; width:100%; max-width:600px; height:100%; max-height:920px; overflow:hidden; background:#000; box-shadow:0 0 60px rgba(0,0,0,.6); display:flex; flex-direction:column; }
 
-        :root {
-            --glass: rgba(255, 255, 255, 0.1);
-            --border: rgba(255, 255, 255, 0.2);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
+/* верх: палітра і терези */
+#top { padding:8px 10px 8px; background:var(--panel); display:flex; flex-direction:column; gap:6px; z-index:5; }
+.top-row { display:flex; align-items:center; gap:8px; }
+.icon-btn { background:rgba(255,255,255,.1); color:#fff; border:0; border-radius:50%; width:34px; height:34px; font-size:16px; cursor:pointer; display:grid; place-items:center; text-decoration:none; flex:0 0 34px; }
+#title { flex:1; font-weight:900; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.palette { display:flex; gap:4px; }
+.drop { width:18px; height:22px; border-radius:50% 50% 50% 50% / 60% 60% 40% 40%; transform:rotate(180deg); background:#3a3150; border:2px solid rgba(255,255,255,.25); transition:background .5s, box-shadow .5s; }
+.drop.on { box-shadow:0 0 10px var(--c); background:var(--c); border-color:#fff; }
+.scale { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:900; }
+.scale .bar { flex:1; height:8px; border-radius:99px; background:linear-gradient(90deg,#4b4b5e,#ffd23f 50%,#ff9ff3); position:relative; }
+.scale .bar i { position:absolute; top:-5px; width:18px; height:18px; border-radius:50%; background:#fff; border:3px solid var(--magic); transform:translateX(-50%); transition:left .6s cubic-bezier(.3,1.4,.5,1); left:50%; }
 
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #1a1a1a;
-            color: #ecf0f1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 10px;
-            box-sizing: border-box;
-            overflow-x: hidden;
-            touch-action: manipulation;
-            user-select: none;
-            position: relative;
-        }
+/* сцена */
+#stage { position:relative; flex:1; min-height:0; overflow:hidden; background:#222; }
+#color-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#grey { position:absolute; inset:0; width:100%; height:100%; touch-action:none; }
+#stage.paint #grey { cursor:crosshair; }
+.villain { position:absolute; right:10px; bottom:10px; width:118px; height:118px; z-index:3; transition:transform .8s cubic-bezier(.3,1.4,.5,1), opacity .8s; }
+.villain img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; border:4px solid #b2bec3; background:#fff; box-shadow:0 6px 18px rgba(0,0,0,.5); }
+.villain .after { opacity:0; transition:opacity 1.4s; border-color:var(--gold); }
+.villain.kind .after { opacity:1; }
+.villain.kind { transform:scale(1.12); }
+.villain.smart { transform:scale(.92); } .villain.smart img:first-child { filter:sepia(.7); }
+.villain.power { transform:translateX(160px) rotate(40deg) scale(.5); opacity:0; }
+.villain .name { position:absolute; left:50%; bottom:-10px; transform:translateX(-50%); background:rgba(0,0,0,.75); padding:2px 9px; border-radius:99px; font-size:11px; font-weight:900; white-space:nowrap; z-index:2; }
+.ink { position:absolute; left:12px; right:140px; top:12px; z-index:4; background:rgba(0,0,0,.6); border-radius:99px; padding:6px 10px; font-size:13px; font-weight:900; display:flex; align-items:center; gap:8px; }
+.ink .bar { flex:1; height:10px; background:rgba(255,255,255,.15); border-radius:99px; overflow:hidden; }
+.ink .bar i { display:block; height:100%; width:100%; background:linear-gradient(90deg,#ff6b6b,#feca57,#48dbfb,#a29bfe); transition:width .1s; }
+.pct { position:absolute; left:12px; top:46px; z-index:4; background:rgba(0,0,0,.6); border-radius:99px; padding:4px 10px; font-size:13px; font-weight:900; }
+.pencil { position:absolute; z-index:6; pointer-events:none; font-size:30px; transform:translate(-4px,-28px); }
+.flash { position:absolute; inset:0; z-index:7; pointer-events:none; animation:flash .7s forwards; }
+@keyframes flash { from { background:rgba(255,255,255,.7); } to { background:rgba(255,255,255,0); } }
+.shake { animation:shake .5s; }
+@keyframes shake { 20% { transform:translate(-6px,3px); } 40% { transform:translate(6px,-3px); } 60% { transform:translate(-4px,2px); } 80% { transform:translate(4px,-1px); } }
 
-        /* Фонова анімація */
-        #bg-canvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; pointer-events: none;
-            background: radial-gradient(circle at center, #2c3e50, #000);
-            transition: background 1s ease;
-        }
+/* діалог */
+#dlg { background:var(--panel); border-top:4px solid var(--gold); padding:12px; display:flex; flex-direction:column; gap:10px; z-index:5; }
+.say { display:flex; gap:10px; align-items:flex-start; }
+.face { width:56px; height:56px; flex:0 0 56px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); background:#fff; }
+.who { color:var(--gold); font-weight:900; font-size:12.5px; text-transform:uppercase; letter-spacing:.5px; }
+.txt { font-size:15.5px; line-height:1.4; color:#efe9ff; min-height:42px; }
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.card { border:0; border-radius:16px; padding:10px 6px 9px; color:#fff; cursor:pointer; background:linear-gradient(160deg,#3b2d63,#251a42); box-shadow:0 4px 0 rgba(0,0,0,.35); border-bottom:5px solid var(--c); display:flex; flex-direction:column; align-items:center; gap:4px; min-height:104px; justify-content:center; }
+.card:active { transform:translateY(3px); box-shadow:none; }
+.card .ic { font-size:30px; }
+.card b { font-size:12.5px; line-height:1.2; }
+.card small { font-size:10.5px; color:var(--c); font-weight:900; letter-spacing:.5px; }
+.btn { width:100%; padding:14px; border:0; border-radius:14px; font-weight:900; font-size:16px; cursor:pointer; color:#fff; background:var(--magic); box-shadow:0 4px 0 rgba(0,0,0,.3); }
+.btn:active { transform:translateY(3px); box-shadow:none; }
+.btn.gold { background:linear-gradient(135deg,#ffe066,#f6b93b); color:var(--ink); }
+.btn.ghost { background:rgba(255,255,255,.12); }
 
-        /* --- UI Elements --- */
-        #ui-top {
-            width: 100%; max-width: 600px;
-            margin-bottom: 15px;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 10px;
-            border-radius: 15px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            z-index: 10;
-            position: relative;
-        }
-
-        #music-toggle {
-            position: absolute;
-            right: 10px; top: 10px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 20;
-        }
-
-        .soul-label {
-            display: flex; justify-content: space-between;
-            font-size: 12px; font-weight: 900; letter-spacing: 1px;
-            text-transform: uppercase; margin-bottom: 8px;
-            padding-right: 35px;
-        }
-
-        #soul-bar-bg {
-            width: 100%; height: 8px;
-            background: rgba(0,0,0,0.5); border-radius: 10px;
-            position: relative; overflow: hidden;
-        }
-
-        #soul-fill {
-            height: 100%; width: 50%;
-            background: linear-gradient(90deg, #ff4757, #ffa502, #2ed573);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-            transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        /* --- ЕКРАН ГРИ --- */
-        #game-screen {
-            width: 100%; max-width: 600px;
-            height: 45vh; min-height: 300px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            position: relative;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
-            transition: box-shadow 0.3s;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
-        }
-        .shake-screen { animation: shake 0.5s; }
-
-        .scene {
-            display: flex; gap: 10%; align-items: center; z-index: 5;
-            margin-bottom: 60px;
-        }
-        .char {
-            font-size: 80px;
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-origin: bottom center;
-        }
-        
-        .hero-mad { filter: drop-shadow(0 0 25px #ff4757); transform: scale(1.2) rotate(-5deg); }
-        .hero-happy { filter: drop-shadow(0 0 25px #2ed573); transform: scale(1.1) translateY(-10px); }
-        .enemy-scared { opacity: 0; transform: translateX(100px) rotate(180deg) scale(0.5); filter: blur(10px); }
-        .enemy-friend { transform: scale(1.2); filter: drop-shadow(0 0 20px gold); }
-
-        /* --- ТЕКСТ --- */
-        #story-box {
-            position: absolute; bottom: 20px; width: 90%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            padding: 15px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        #story-text { font-size: 16px; line-height: 1.5; margin: 0; min-height: 24px;}
-        .cursor::after { content: '|'; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        #room-title {
-            position: absolute; top: 15px; 
-            color: rgba(255,255,255,0.5); 
-            font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-        }
-
-        #history-icons {
-            position: absolute; top: 15px; left: 15px;
-            font-size: 18px; filter: grayscale(0.5);
-        }
-
-        /* --- КАРТКИ --- */
-        #interaction-panel {
-            width: 100%; max-width: 600px;
-            display: flex; justify-content: space-between; gap: 10px;
-        }
-
-        .card {
-            background: linear-gradient(145deg, #2c3e50, #34495e);
-            color: #fff; flex: 1; height: 130px;
-            border-radius: 16px; cursor: pointer;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative; overflow: hidden;
-        }
-        
-        .card::before {
-            content: ''; position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(rgba(255,255,255,0.1), transparent);
-            opacity: 0.5;
-        }
-
-        .card:active { transform: scale(0.95); box-shadow: inset 0 4px 10px rgba(0,0,0,0.5); }
-        .card-icon { font-size: 40px; margin-bottom: 8px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        .card-text { font-size: 13px; font-weight: 700; opacity: 0.9; }
-
-        .card.force { border-bottom: 4px solid #ff4757; }
-        .card.kind { border-bottom: 4px solid #2ed573; }
-        .card.smart { border-bottom: 4px solid #ffa502; }
-
-        #next-btn {
-            width: 100%; max-width: 600px;
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            color: white; padding: 18px; font-size: 18px; font-weight: bold;
-            border: none; border-radius: 15px;
-            cursor: pointer; display: none; margin-top: 20px;
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-            text-transform: uppercase; letter-spacing: 1px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-
-        /* Overlay */
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 100;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center;
-        }
-        .start-btn {
-            padding: 15px 30px; font-size: 20px; background: #2ed573; color: white;
-            border: none; border-radius: 50px; cursor: pointer; margin-top: 20px;
-            font-family: inherit; font-weight: bold;
-            box-shadow: 0 0 20px #2ed573;
-        }
-    </style>
+/* екрани */
+.screen { position:absolute; inset:0; z-index:50; overflow-y:auto; display:flex; flex-direction:column; align-items:center; text-align:center; padding:22px 16px 28px;
+  background:radial-gradient(circle at 50% 0%, #4a3480 0%, #1c1236 60%, #110b1f 100%); }
+.screen > * { flex-shrink:0; }
+.screen h1 { margin:8px 0 2px; color:var(--gold); font-size:28px; text-shadow:0 3px 0 #5a3c00; }
+.screen h2 { margin:0 0 12px; color:var(--lav); font-size:14px; letter-spacing:3px; }
+.lead { color:#ddd3f7; max-width:440px; font-size:15px; line-height:1.45; margin:0 0 12px; }
+.pen { width:150px; height:150px; border-radius:26px; object-fit:cover; border:4px solid var(--gold); box-shadow:0 0 40px rgba(255,210,63,.5); background:#fff; animation:bob 2.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform:translateY(-8px) rotate(-2deg); } }
+.guides { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:100%; max-width:440px; margin:6px 0 4px; }
+.guide { border:3px solid transparent; border-radius:18px; padding:8px 4px; background:rgba(255,255,255,.07); color:#fff; cursor:pointer; }
+.guide img { width:76px; height:76px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); background:#fff; }
+.guide b { display:block; font-size:15px; margin-top:4px; } .guide small { display:block; font-size:11.5px; color:var(--lav); line-height:1.25; margin-top:2px; }
+.guide.sel { border-color:var(--gold); background:rgba(255,210,63,.14); }
+.how { text-align:left; max-width:440px; background:rgba(255,255,255,.06); border-radius:16px; padding:10px 14px; font-size:13.5px; color:#ddd3f7; line-height:1.45; margin:10px 0 4px; }
+.how b { color:var(--gold); }
+.big { margin-top:12px; max-width:440px; }
+.gallery { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; max-width:440px; margin:8px 0; }
+.gallery figure { margin:0; position:relative; }
+.gallery img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,.25); }
+.gallery figcaption { position:absolute; left:4px; right:4px; bottom:4px; background:rgba(0,0,0,.65); border-radius:8px; font-size:11px; font-weight:900; padding:2px 4px; }
+.morph { position:relative; width:170px; height:170px; margin:6px auto 8px; }
+.morph img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; border:5px solid var(--gold); background:#fff; }
+.morph .after { animation:reveal 2.2s .5s both; }
+@keyframes reveal { from { clip-path:circle(0% at 50% 50%); } to { clip-path:circle(75% at 50% 50%); } }
+.best { color:var(--gold); font-weight:900; font-size:14px; margin-top:8px; }
+@media (max-height:680px) { .card { min-height:88px; } .card .ic { font-size:24px; } .face { width:46px; height:46px; flex-basis:46px; } .villain { width:92px; height:92px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition:none !important; } }
+</style>
 </head>
 <body>
-
-    <audio id="bg-music" loop>
-        <source src="music.mp3" type="audio/mpeg">
-        <source src="music.ogg" type="audio/ogg">
-    </audio>
-
-    <canvas id="bg-canvas"></canvas>
-
-    <div id="start-overlay">
-        <h1>Тінь ФарбоСвіту</h1>
-        <p>Увімкніть звук для повного занурення 🎧</p>
-        <button class="start-btn" onclick="startGame()">ПОЧАТИ ГРУ</button>
+<audio id="music" loop preload="none"><source src="music.mp3" type="audio/mpeg"></audio>
+<div id="game">
+  <div id="top" hidden>
+    <div class="top-row">
+      <button class="icon-btn" onclick="toStart()" aria-label="На початок">🏠</button>
+      <div id="title"></div>
+      <div class="palette" id="palette"></div>
+      <button class="icon-btn" id="mus" onclick="toggleMusic()" aria-label="Музика">🎵</button>
     </div>
+    <div class="scale"><span title="Тінь">🌑</span><div class="bar"><i id="scale-dot"></i></div><span title="Світло">🌈</span></div>
+  </div>
+  <div id="stage">
+    <img id="color-img" alt="">
+    <canvas id="grey"></canvas>
+  </div>
+  <div id="dlg" hidden></div>
+  <div id="screen" class="screen"></div>
+</div>
 
-    <div id="ui-top">
-        <button id="music-toggle" onclick="toggleMusic()">🎵</button>
-        <div class="soul-label">
-            <span style="color: #ff4757">☠️ Сила</span>
-            <span style="color: #2ed573">❤️ Доброта</span>
-        </div>
-        <div id="soul-bar-bg">
-            <div id="soul-fill"></div>
-        </div>
-    </div>
+<script>
+/* ═════════ картинки з saga3 ═════════ */
+const R = '../../';
+const V = (id, a) => `${R}assets/img/villains/${id}-${a ? 'after' : 'before'}-s.jpg`;
+const HERO = {
+  fin:   { name: 'Фін',  img: R + 'assets/img/heroes/fin.jpg',   gift: 'Веселковий дим: олівець малює ширше', brush: 1.45, ink: 1 },
+  crash: { name: 'Краш', img: R + 'assets/img/heroes/crash.jpg', gift: 'Дзвіночок Радості: фарби більше', brush: 1, ink: 1.35 },
+  luna:  { name: 'Луна', img: R + 'assets/img/heroes/luna.jpg',  gift: 'Медальйон: показує, де доброта', brush: 1.15, ink: 1.1, hint: true },
+};
+const PEN = R + 'assets/img/artifacts/farbosvit-s.jpg';
+const COLORS = ['#ff4757', '#ffa502', '#ffd32a', '#2ed573', '#1e90ff', '#a55eea'];
 
-    <div id="game-screen">
-        <div id="history-icons"></div>
-        <h2 id="room-title"></h2>
+/* ═════════ шість місць, з яких Тінь украла кольори ═════════ */
+const SCENES = [
+  { place: 'Дзеркальне Озеро', bg: 'books/C01/p04-s.jpg', v: 'fear_shadows', vn: 'Тіні Страху',
+    desc: 'З Дзеркального Озера встають Тіні Страху — кожна схожа на чийсь страх. Вода стала сірою, як туман.',
+    power: ['💥', 'Розбити віддзеркалення', 'Вода бризнула, тіні розбіглися… але страхи сховалися ще глибше.'],
+    kind: ['🤝', 'Сказати страху «я поруч»', 'Друзі взялися за лапки — і Тіні Страху розвіялися, бо страх тане, коли ти не сам.'],
+    smart: ['🔦', 'Засвітити медальйон', 'Тіні відступили від світла, і стало видно стежку вздовж берега.'] },
+  { place: 'Піски Застиглого Часу', bg: 'books/C03/p05-s.jpg', v: 'hurry_ghost', vn: 'Привид-Поспішайко',
+    desc: 'Прозорий вихор кружляє пустелею й кричить: «Швидше! Швидше!» Від поспіху всі барви вицвіли.',
+    power: ['🌪️', 'Перегнати вихор', 'Ви мчали так, що закрутилася голова. Привид засміявся й полетів поспішати далі.'],
+    kind: ['🐢', 'Запросити посидіти поруч', 'Привид-Поспішайко вперше зупинився… і помітив, які гарні барви ховаються в пісках.'],
+    smart: ['⏳', 'Перевернути пісочний годинник', 'Час потік спокійніше, і вихор трохи вгамувався.'] },
+  { place: 'Узбережжя Загублених Слів', bg: 'books/C06/p02-s.jpg', v: 'storm', vn: 'Шторм Образи',
+    desc: 'Над узбережжям гуде Шторм Образи. Він виріс із проковтнутих слів, яких ніхто не сказав уголос.',
+    power: ['⚡', 'Перекричати шторм', 'Слова зіткнулися й загриміли — шторм став ще темнішим.'],
+    kind: ['🦋', 'Сказати щирі слова', 'Щирі слова-метелики полетіли до шторму — і він почав танути, мов хмарка на сонці.'],
+    smart: ['🐚', 'Послухати Мушлю-Шептуна', 'Мушля прошепотіла, що шторм просто дуже образився. Вітер стих.'] },
+  { place: 'Печера ароматів', bg: 'books/C09/p06-s.jpg', v: 'nyukhokrad', vn: 'НюхоКрад',
+    desc: 'Самотній НюхоКрад сховав усі аромати світу в баночки. Без запахів квіти посіріли й засумували.',
+    power: ['🫙', 'Розбити баночки', 'Скло задзвеніло, аромати розлетілися безладно, а НюхоКрад заплакав.'],
+    kind: ['🌸', 'Подарувати Запах Дружби', 'НюхоКрад відчув Запах Дружби — і сам відкрив усі баночки!'],
+    smart: ['🔄', 'Помінятися ароматами', 'Ви домовилися: одна баночка — одна весела історія. НюхоКрад потроху ділиться.'] },
+  { place: 'Площа Вічної Веселки', bg: 'books/D01/p03-s.jpg', v: 'boredom_clot', vn: 'Згусток Нудьги',
+    desc: 'Джерело-Фарбограй ледь цідить сіру воду: у ньому засів Липкий Згусток Нудьги і їсть усі кольори.',
+    power: ['🔨', 'Вибити згусток', 'Бульк! Згусток виліз, але бризки нудьги розлетілися по всій площі.'],
+    kind: ['😄', 'Влаштувати свято сміху', 'Від дзвінкого сміху Згусток вилетів, як стара жуйка, і розчинився!'],
+    smart: ['🫧', 'Прочистити трубу', 'Ви знайшли засмічену трубу — і вода побігла веселіше.'] },
+  { place: 'Місто Солодких Мрій', bg: 'books/A03/p02-s.jpg', v: 'tinsum', vn: 'ТіньСум', final: true,
+    desc: 'Ось і вона — Тінь ФарбоСвіту! Маленький швидкий ТіньСум тягне мішок із чужими радісними мріями.',
+    power: ['🪤', 'Спіймати в пастку', 'ТіньСум попався, але мрії в мішку так і лишилися сірими.'],
+    kind: ['🎨', 'Дати йому олівець', 'ТіньСум намалював свою першу веселку — і став головним художником Міста Солодких Мрій!'],
+    smart: ['🍬', 'Обміняти мішок на льодяник', 'ТіньСум віддав мішок за льодяник. Мрії повертаються додому.'] },
+];
+const CHOICE = {
+  kind:  { label: 'ДОБРОТА', c: '#2ed573', ink: 1, shift: 1 },
+  smart: { label: 'КМІТЛИВІСТЬ', c: '#ffa502', ink: .62, shift: .35 },
+  power: { label: 'СИЛА', c: '#ff6b6b', ink: .2, shift: -1 },
+};
+const GUIDE_LINES = {
+  fin:   { start: 'Ого, тут усе сіре… Що зробимо?', paint: 'Тримай олівець ФарбоСвіт! Я додам веселкового диму — малюй сміливо!' },
+  crash: { start: 'Дзень-дзелень! Тут кольори зникли. Як допоможемо?', paint: 'Мій дзвіночок наповнив олівець фарбою. Розфарбовуй!' },
+  luna:  { start: 'Придивися: за кожною сірою тінню ховається чийсь сум. Як вчинимо?', paint: 'Олівець малює почуття. Проводь по сірому — і світ оживе!' },
+};
+const NEED = 45;   // скільки % треба розфарбувати, щоб отримати краплю кольору
 
-        <div class="scene">
-            <div id="hero" class="char">😐</div>
-            <div id="enemy" class="char">🚪</div>
-        </div>
+/* ═════════ збереження ═════════ */
+const KEY = 'sv:farbo';
+let save = { best: 0, endings: [] };
+try { Object.assign(save, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} };
 
-        <div id="story-box">
-            <p id="story-text" class="cursor">Завантаження...</p>
-        </div>
-    </div>
+/* ═════════ звук ═════════ */
+const AU = {
+  ctx: null, music: null,
+  init() { try { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} this.music = document.getElementById('music'); this.music.volume = .25; },
+  tone(f, t = 'sine', d = .2, v = .08) {
+    if (!this.ctx) return; const o = this.ctx.createOscillator(), g = this.ctx.createGain(), n = this.ctx.currentTime;
+    o.type = t; o.frequency.setValueAtTime(f, n); g.gain.setValueAtTime(v, n); g.gain.exponentialRampToValueAtTime(.001, n + d); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(n + d);
+  },
+  boom() { this.tone(80, 'sawtooth', .6, .15); setTimeout(() => this.tone(45, 'square', .5, .12), 60); },
+  chime() { [660, 880, 1320].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', .9, .05), i * 110)); },
+  smart() { this.tone(330, 'sine', .3, .09); setTimeout(() => this.tone(495, 'sine', .45, .09), 110); },
+  brush() { this.tone(900 + Math.random() * 500, 'triangle', .05, .018); },
+  drop() { [523, 784, 1047, 1568].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', .3, .07), i * 90)); },
+};
+function toggleMusic() {
+  const m = AU.music; if (!m) return;
+  if (m.paused) { m.play().catch(() => {}); $('mus').textContent = '🎵'; } else { m.pause(); $('mus').textContent = '🔇'; }
+}
 
-    <div id="interaction-panel"></div>
-    
-    <button id="next-btn" onclick="nextRoom()">Далі ➡</button>
+/* ═════════ стан ═════════ */
+const $ = (id) => document.getElementById(id);
+const S = { guide: 'fin', i: 0, shade: 0, drops: [], cover: [], kinds: 0, choice: null };
 
-    <script>
-        // --- AUDIO ENGINE ---
-        const AudioFX = {
-            ctx: null,
-            musicElement: null,
-            
-            init: function() {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-                this.musicElement = document.getElementById('bg-music');
-                this.musicElement.volume = 0.3; // Гучність музики (30%)
-            },
+/* ═════════ стартовий екран ═════════ */
+function toStart() {
+  stopPaint(); $('top').hidden = true; $('dlg').hidden = true;
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `
+    <a class="icon-btn" href="../../school.html" style="position:absolute;top:12px;left:12px" aria-label="Назад">✕</a>
+    <img class="pen" src="${PEN}" alt="Олівець ФарбоСвіт">
+    <h1>ТІНЬ ФАРБОСВІТУ</h1><h2>ПРИГОДА З ОЛІВЦЕМ</h2>
+    <p class="lead">Хтось украв кольори з шести куточків СилаВолії! Олівець «ФарбоСвіт» втілює не бажання, а почуття — тож чим добріший твій вчинок, тим більше фарби в олівці.</p>
+    <div class="how">1. Обери вчинок: <b style="color:#ff6b6b">силу</b>, <b style="color:#ffa502">кмітливість</b> чи <b style="color:#2ed573">доброту</b>.<br>2. Розфарбуй сіру картинку пальцем або мишкою.<br>3. Розфарбуй ${NEED}% — і отримаєш краплю кольору для веселки 🌈</div>
+    <p class="lead" style="margin:10px 0 0"><b>Хто піде з тобою?</b></p>
+    <div class="guides">${Object.entries(HERO).map(([id, h]) => `<button class="guide ${id === S.guide ? 'sel' : ''}" data-g="${id}"><img src="${h.img}" alt=""><b>${h.name}</b><small>${h.gift}</small></button>`).join('')}</div>
+    <button class="btn gold big" onclick="startGame()">🎨 ПОЧАТИ ПРИГОДУ</button>
+    ${save.best ? `<div class="best">Найкраща веселка: ${save.best} з 6 крапель ${save.endings.includes('rainbow') ? '· 🌈 фінал відкрито' : ''}</div>` : ''}`;
+  sc.querySelectorAll('.guide').forEach((b) => b.onclick = () => { S.guide = b.dataset.g; sc.querySelectorAll('.guide').forEach((x) => x.classList.toggle('sel', x === b)); AU.init(); AU.tone(880, 'triangle', .08, .05); });
+}
 
-            // Ефекти (SFX) залишаємо кодом, щоб не вантажити купу файлів
-            playTone: function(freq, type, duration, vol = 0.1) {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
-            },
-            playBoom: function() {
-                this.playTone(80, 'sawtooth', 0.6, 0.2);
-                setTimeout(() => this.playTone(40, 'square', 0.6, 0.2), 50);
-            },
-            playChime: function() {
-                this.playTone(600, 'sine', 0.8, 0.05);
-                setTimeout(() => this.playTone(800, 'sine', 0.8, 0.05), 100);
-                setTimeout(() => this.playTone(1200, 'sine', 1.2, 0.03), 200);
-            },
-            playClick: function() {
-                this.playTone(400, 'triangle', 0.1, 0.05);
-            },
-            playSmart: function() {
-                this.playTone(300, 'sine', 0.3, 0.1);
-                setTimeout(() => this.playTone(450, 'sine', 0.5, 0.1), 100);
-            },
+function startGame() {
+  AU.init(); if (AU.music.paused) AU.music.play().catch(() => {});
+  S.i = 0; S.shade = 0; S.drops = []; S.cover = []; S.kinds = 0;
+  $('screen').hidden = true; $('top').hidden = false; $('dlg').hidden = false;
+  $('palette').innerHTML = COLORS.map((c) => `<span class="drop" style="--c:${c}"></span>`).join('');
+  updateScale(); loadScene();
+}
+function updateScale() { $('scale-dot').style.left = (50 + S.shade * 8) + '%'; }
 
-            // Управління MP3
-            startMusic: function() {
-                if (this.musicElement) {
-                    this.musicElement.play().catch(e => {
-                        console.log("Автозапуск музики заблоковано, чекаємо взаємодії:", e);
-                    });
-                }
-            },
+/* ═════════ діалог ═════════ */
+let typing = null;
+function say(who, text, extra) {
+  const h = HERO[who] || who;
+  $('dlg').innerHTML = `<div class="say"><img class="face" src="${h.img}" alt=""><div style="flex:1"><div class="who">${h.name}</div><div class="txt" id="txt"></div></div></div>${extra || ''}`;
+  const el = $('txt'); let k = 0; clearInterval(typing);
+  typing = setInterval(() => { k += 2; el.textContent = text.slice(0, k); if (k >= text.length) { clearInterval(typing); typing = null; } }, 20);
+  el.onclick = () => { clearInterval(typing); typing = null; el.textContent = text; };
+}
 
-            toggleMute: function() {
-                if (this.musicElement.paused) {
-                    this.musicElement.play();
-                    return false; // Грає (не зам'ючено)
-                } else {
-                    this.musicElement.pause();
-                    return true; // Пауза (зам'ючено)
-                }
-            }
-        };
+/* ═════════ сцена ═════════ */
+function loadScene() {
+  stopPaint(); S.painted = false;
+  const sc = SCENES[S.i];
+  $('title').textContent = `${S.i + 1}/6 · ${sc.place}`;
+  const st = $('stage'); st.querySelectorAll('.villain,.ink,.pct').forEach((e) => e.remove());
+  st.insertAdjacentHTML('beforeend', `<div class="villain" id="villain"><img src="${V(sc.v)}" alt="${sc.vn}"><img class="after" src="${V(sc.v, true)}" alt=""><span class="name">${sc.vn}</span></div>`);
+  const img = $('color-img');
+  img.onload = () => { drawGrey(); };
+  img.src = R + sc.bg;
+  if (img.complete && img.naturalWidth) drawGrey();
+  const order = HERO[S.guide].hint ? ['kind', 'smart', 'power'] : shuffle(['power', 'kind', 'smart']);
+  say(S.guide, sc.desc + ' ' + GUIDE_LINES[S.guide].start, `<div class="cards">${order.map((t) => {
+    const [ic, title] = sc[t], c = CHOICE[t];
+    return `<button class="card" data-t="${t}" style="--c:${c.c}"><span class="ic">${ic}</span><b>${title}</b>${HERO[S.guide].hint || S.i < 1 ? `<small>${c.label}</small>` : ''}</button>`;
+  }).join('')}</div>`);
+  $('dlg').querySelectorAll('.card').forEach((b) => b.onclick = () => choose(b.dataset.t));
+}
+const shuffle = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
 
-        function toggleMusic() {
-            const isMuted = AudioFX.toggleMute();
-            const btn = document.getElementById('music-toggle');
-            btn.innerText = isMuted ? '🔇' : '🎵';
-        }
+/* сіра копія картинки поверх кольорової: олівець її «стирає» */
+let G = null;
+function coverRect(iw, ih, cw, ch) { const s = Math.max(cw / iw, ch / ih); const w = iw * s, h = ih * s; return [(cw - w) / 2, (ch - h) / 2, w, h]; }
+function drawGrey() {
+  const cv = $('grey'), st = $('stage'), img = $('color-img');
+  const cw = st.clientWidth, ch = st.clientHeight; if (!cw || !ch || !img.naturalWidth) return;
+  cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(img, ...coverRect(img.naturalWidth, img.naturalHeight, cw, ch));
+  const d = ctx.getImageData(0, 0, cw, ch), p = d.data;
+  for (let k = 0; k < p.length; k += 4) { const y = (p[k] * .3 + p[k + 1] * .59 + p[k + 2] * .11) * .82 + 18; p[k] = y; p[k + 1] = y; p[k + 2] = y + 8; }
+  ctx.putImageData(d, 0, 0);
+  G = { ctx, cw, ch };
+}
 
-        // --- PARTICLE SYSTEM ---
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
+function choose(t) {
+  const sc = SCENES[S.i], c = CHOICE[t]; S.choice = t;
+  S.shade += c.shift; updateScale(); if (t === 'kind') S.kinds++;
+  const vil = $('villain'); vil.classList.add(t);
+  if (t === 'power') { AU.boom(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); }
+  else if (t === 'kind') { AU.chime(); const f = document.createElement('div'); f.className = 'flash'; $('stage').appendChild(f); setTimeout(() => f.remove(), 700); }
+  else AU.smart();
+  say(S.guide, sc[t][2], `<button class="btn gold" id="go">🖍️ РОЗФАРБУВАТИ СВІТ</button>`);
+  $('go').onclick = startPaint;
+}
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+/* ═════════ розфарбовування ═════════ */
+let P = null;
+function startPaint() {
+  const h = HERO[S.guide], c = CHOICE[S.choice];
+  if (!G) drawGrey();
+  S.painted = true;
+  const r = Math.max(22, Math.min(G.cw, G.ch) * .075) * h.brush;
+  const total = G.cw * G.ch * 1.3 / (2 * r) * c.ink * h.ink;
+  P = { r, total, left: total, last: null, down: false, tick: 0 };
+  const st = $('stage'); st.classList.add('paint');
+  st.insertAdjacentHTML('beforeend', `<div class="ink">🖍️<div class="bar"><i id="inkbar"></i></div></div><div class="pct" id="pct">🎨 0% · треба ${NEED}%</div>`);
+  say(S.guide, GUIDE_LINES[S.guide].paint + (S.choice === 'power' ? ' Ой… після сили фарби в олівці зовсім мало.' : S.choice === 'smart' ? ' Фарби — половинка олівця.' : ''),
+    `<button class="btn" id="done">✓ ГОТОВО</button>`);
+  $('done').onclick = finishPaint;
+  const cv = $('grey');
+  cv.onpointerdown = (e) => { if (!P) return; P.down = true; P.last = pos(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {} stroke(P.last, P.last); };
+  cv.onpointermove = (e) => { if (!P || !P.down) return; const q = pos(e); stroke(P.last, q); P.last = q; };
+  cv.onpointerup = cv.onpointercancel = () => { if (P) { P.down = false; measure(); } };
+}
+function pos(e) { const b = $('grey').getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; }
+function stroke(a, b) {
+  if (!P || P.left <= 0) return;
+  const ctx = G.ctx, dist = Math.hypot(b[0] - a[0], b[1] - a[1]) || P.r * .5;
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = P.r * 2;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0] + .01, b[1]); ctx.stroke();
+  P.left -= dist; $('inkbar').style.width = Math.max(0, P.left / P.total * 100) + '%';
+  if (++P.tick % 6 === 0) { AU.brush(); measure(); }
+  if (P.left <= 0) { measure(); setTimeout(finishPaint, 500); }
+}
+function measure() {
+  if (!G) return 0;
+  const d = G.ctx.getImageData(0, 0, G.cw, G.ch).data; let clear = 0, n = 0;
+  for (let y = 2; y < G.ch; y += 8) for (let x = 2; x < G.cw; x += 8) { n++; if (d[(y * G.cw + x) * 4 + 3] < 40) clear++; }
+  const pct = Math.round(clear / n * 100);
+  const el = $('pct'); if (el) { el.textContent = `🎨 ${pct}% · треба ${NEED}%`; el.style.color = pct >= NEED ? '#7bed9f' : '#fff'; }
+  return pct;
+}
+function stopPaint() { P = null; const st = $('stage'); if (st) st.classList.remove('paint'); const cv = $('grey'); if (cv) cv.onpointerdown = cv.onpointermove = cv.onpointerup = null; }
+function finishPaint() {
+  if (!P) return;
+  const pct = measure(); stopPaint();
+  S.cover[S.i] = pct;
+  const got = pct >= NEED;
+  if (got) { S.drops.push(S.i); $('palette').children[S.i].classList.add('on'); AU.drop(); }
+  else AU.tone(220, 'sine', .4, .06);
+  const sc = SCENES[S.i];
+  const msg = got ? `Є крапля кольору! ${sc.place} знову сяє.` : S.choice === 'power' ? 'Сила не дала олівцю фарби — крапля кольору не з’явилася. Може, наступного разу спробувати доброту?' : `Розфарбовано ${pct}% — трішки не вистачило до краплі.`;
+  say(S.guide, msg, `<button class="btn gold" id="next">${sc.final ? '🌈 ФІНАЛ' : 'ДАЛІ ▶ ' + SCENES[S.i + 1].place}</button>`);
+  $('next').onclick = () => { if (sc.final) return ending(); S.i++; loadScene(); };
+}
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2;
-                this.speedX = (Math.random() - 0.5) * 0.5;
-                this.speedY = (Math.random() - 0.5) * 0.5;
-                this.opacity = Math.random() * 0.5;
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-            }
-            draw() {
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+/* ═════════ фінал ═════════ */
+function ending() {
+  stopPaint();
+  const n = S.drops.length;
+  const type = n >= 5 ? 'rainbow' : n >= 3 ? 'keeper' : 'grey';
+  save.best = Math.max(save.best, n); if (!save.endings.includes(type)) save.endings.push(type); persist();
+  const T = {
+    rainbow: ['СЕРЦЕ ВЕСЕЛКИ', 'Усі краплі злилися у величезну веселку! ТіньСум узяв пензлик і став головним художником Міста Солодких Мрій, а ФарбоСвіт сяє, як ніколи.'],
+    keeper: ['ХРАНИТЕЛЬ КОЛЬОРІВ', 'Більша частина світу знову кольорова! Деякі куточки ще сіренькі — але тепер ти знаєш, яка фарба найсильніша.'],
+    grey: ['ТІНЬ ЩЕ ТУТ', 'Світ лишився майже сірим: олівець ФарбоСвіт малює почуттями, а не силою. Спробуй іще раз — з добротою!'],
+  }[type];
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `<h2 style="margin-top:6px">ФІНАЛ ПРИГОДИ</h2><h1>${T[0]}</h1>
+    ${type === 'rainbow' ? `<div class="morph"><img src="${V('tinsum')}" alt=""><img class="after" src="${V('tinsum', true)}" alt="ТіньСум-художник"></div>` : ''}
+    <div class="palette" style="justify-content:center;margin:6px 0 10px">${COLORS.map((c, i) => `<span class="drop ${S.drops.includes(i) ? 'on' : ''}" style="--c:${c};width:28px;height:34px"></span>`).join('')}</div>
+    <p class="lead">${T[1]}</p>
+    <p class="lead" style="margin-bottom:4px"><b style="color:var(--gold)">Твоя галерея</b> — ${n} з 6 крапель, добрих вчинків: ${S.kinds}</p>
+    <div class="gallery">${SCENES.map((s, i) => { const p = S.cover[i] || 0; return `<figure><img src="${R + s.bg}" alt="" style="filter:grayscale(${Math.max(0, 1 - p / NEED).toFixed(2)})"><figcaption>${S.drops.includes(i) ? '🌈' : '🌑'} ${p}%</figcaption></figure>`; }).join('')}</div>
+    <button class="btn gold big" onclick="startGame()">🎨 ЗІГРАТИ ЩЕ РАЗ</button>
+    <button class="btn ghost big" onclick="toStart()">👥 ОБРАТИ ІНШОГО ГЕРОЯ</button>`;
+  AU.chime();
+}
 
-        function initParticles() {
-            for (let i = 0; i < 40; i++) particles.push(new Particle());
-            animateParticles();
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(animateParticles);
-        }
-
-        // --- GAME DATA ---
-        const rooms = [
-            {
-                name: "Рівень 1: Стара Брама",
-                desc: "Твій друг за замкненими дверима. Чути шурхіт...",
-                bg: "radial-gradient(circle at center, #2c3e50, #000)",
-                hero: "😐", enemy: "🚪",
-                choices: [
-                    { type: "force", icon: "💣", title: "Вибух", res: "БА-БАХ! Тріски летять усюди!", val: -20 },
-                    { type: "kind", icon: "🗝️", title: "Ключ", res: "Клац... Механізм піддався.", val: 20 },
-                    { type: "smart", icon: "🧀", title: "Приманка", res: "Мишка прогризла прохід!", val: 5 }
-                ]
-            },
-            {
-                name: "Рівень 2: Плакучий Привид",
-                desc: "Привид завиває від самотності...",
-                bg: "radial-gradient(circle at center, #4834d4, #130f40)",
-                hero: "😨", enemy: "👻",
-                choices: [
-                    { type: "force", icon: "🔦", title: "Світло", res: "Привид розтанув з криком!", val: -20 },
-                    { type: "kind", icon: "🧸", title: "Друг", res: "Він обійняв іграшку і затих.", val: 20 },
-                    { type: "smart", icon: "📺", title: "Шоу", res: "Він задивився в екран.", val: 10 }
-                ]
-            },
-            {
-                name: "Рівень 3: Жадібний Гоблін",
-                desc: "Він перераховує монети і гарчить.",
-                bg: "radial-gradient(circle at center, #d35400, #2c1e10)",
-                hero: "🤔", enemy: "👺",
-                choices: [
-                    { type: "force", icon: "⚔️", title: "Атака", res: "Ти налякав його до гикавки!", val: -20 },
-                    { type: "kind", icon: "🍎", title: "Їжа", res: "Він з'їв і став добрим.", val: 20 },
-                    { type: "smart", icon: "💰", title: "Обмін", res: "Ви уклали вигідну угоду.", val: 10 }
-                ]
-            },
-            {
-                name: "Рівень 4: Дракон Сну",
-                desc: "Велетенський дракон хропе на шляху.",
-                bg: "radial-gradient(circle at center, #27ae60, #05240a)",
-                hero: "🤫", enemy: "🐲",
-                choices: [
-                    { type: "force", icon: "📢", title: "Гудок", res: "Він прокинувся і дихнув вогнем!", val: -30 },
-                    { type: "kind", icon: "🎻", title: "Колискова", res: "Він заснув ще міцніше.", val: 20 },
-                    { type: "smart", icon: "🍖", title: "М'ясо", res: "Він поїв уві сні і відсунувся.", val: 10 }
-                ]
-            }
-        ];
-
-        let currentRoom = 0;
-        let score = 50;
-        let inventory = [];
-
-        const ui = {
-            title: document.getElementById('room-title'),
-            text: document.getElementById('story-text'),
-            panel: document.getElementById('interaction-panel'),
-            hero: document.getElementById('hero'),
-            enemy: document.getElementById('enemy'),
-            screen: document.getElementById('game-screen'),
-            bar: document.getElementById('soul-fill'),
-            history: document.getElementById('history-icons'),
-            nextBtn: document.getElementById('next-btn'),
-            bgCanvas: document.getElementById('bg-canvas')
-        };
-
-        function startGame() {
-            document.getElementById('start-overlay').style.display = 'none';
-            AudioFX.init();
-            AudioFX.startMusic();
-            initParticles();
-            loadRoom(0);
-        }
-
-        function typeText(text, element) {
-            element.innerText = "";
-            element.classList.add('cursor');
-            let i = 0;
-            let speed = 30; 
-            function type() {
-                if (i < text.length) {
-                    element.innerText += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                } else {
-                    element.classList.remove('cursor');
-                }
-            }
-            type();
-        }
-
-        function loadRoom(idx) {
-            if (idx >= rooms.length) {
-                showFinal();
-                return;
-            }
-            
-            const r = rooms[idx];
-            ui.title.innerText = r.name;
-            typeText(r.desc, ui.text);
-            ui.bgCanvas.style.background = r.bg;
-            
-            ui.hero.className = "char";
-            ui.hero.innerText = r.hero;
-            ui.enemy.className = "char";
-            ui.enemy.innerText = r.enemy;
-            ui.enemy.style.opacity = 1;
-            ui.screen.classList.remove('shake-screen');
-            ui.screen.style.borderColor = "rgba(255,255,255,0.2)";
-
-            ui.nextBtn.style.display = "none";
-            ui.panel.style.display = "flex";
-            ui.panel.innerHTML = "";
-
-            r.choices.forEach(c => {
-                let card = document.createElement("div");
-                card.className = `card ${c.type}`;
-                card.onclick = () => makeChoice(c);
-                card.innerHTML = `
-                    <div class="card-icon">${c.icon}</div>
-                    <div class="card-text">${c.title}</div>
-                `;
-                ui.panel.appendChild(card);
-            });
-        }
-
-        function makeChoice(choice) {
-            score += choice.val;
-            if (score < 0) score = 0;
-            if (score > 100) score = 100;
-            ui.bar.style.width = score + "%";
-
-            typeText(choice.res, ui.text);
-            inventory.push(choice.icon);
-            let recentInventory = inventory.slice(-5);
-            ui.history.innerText = recentInventory.join(" ");
-
-            if (choice.type === "force") {
-                AudioFX.playBoom();
-                ui.hero.className = "char hero-mad";
-                ui.enemy.className = "char enemy-scared";
-                ui.screen.classList.add('shake-screen');
-                ui.screen.style.borderColor = "#ff4757";
-            } else if (choice.type === "kind") {
-                AudioFX.playChime();
-                ui.hero.className = "char hero-happy";
-                ui.enemy.className = "char enemy-friend";
-                ui.screen.style.borderColor = "#2ed573";
-            } else {
-                AudioFX.playSmart();
-                ui.enemy.style.opacity = 0.5;
-                ui.screen.style.borderColor = "#ffa502";
-            }
-
-            ui.panel.style.display = "none";
-            ui.nextBtn.style.display = "block";
-        }
-
-        function nextRoom() {
-            AudioFX.playClick();
-            currentRoom++;
-            loadRoom(currentRoom);
-        }
-
-        function showFinal() {
-            AudioFX.playChime();
-            ui.panel.style.display = "none";
-            ui.nextBtn.style.display = "none";
-            ui.hero.innerText = "🤴";
-            ui.enemy.innerText = "🙎‍♂️"; 
-            ui.enemy.className = "char";
-            ui.history.style.display = "none";
-
-            let title, msg, color;
-            if (score < 40) {
-                title = "Ти — Воїн Темряви!";
-                msg = "Всі тебе бояться. Друг врятований, але тремтить від твого погляду.";
-                color = "#ff4757";
-            } else if (score > 60) {
-                title = "Ти — Серце Світла!";
-                msg = "Монстри тепер твої друзі. Твоя доброта врятувала світ.";
-                color = "#2ed573";
-            } else {
-                title = "Ти — Майстер Розуму!";
-                msg = "Твій інтелект знайшов вихід з безнадійної ситуації!";
-                color = "#ffa502";
-            }
-
-            ui.title.innerText = "ФІНАЛ ІСТОРІЇ";
-            ui.text.innerHTML = `<span style="color:${color}; font-size:22px; font-weight:bold; text-shadow:0 0 10px ${color}">${title}</span><br><br>${msg}`;
-            
-            let restartBtn = document.createElement("button");
-            restartBtn.innerText = "🔄 Зіграти ще раз";
-            restartBtn.id = "next-btn";
-            restartBtn.style.display = "block";
-            restartBtn.style.background = color;
-            restartBtn.onclick = () => location.reload();
-            ui.panel.parentNode.appendChild(restartBtn);
-        }
-    </script>
+window.addEventListener('resize', () => { if (!S.painted && !$('top').hidden) drawGrey(); });
+toStart();
+</script>
 </body>
 </html>

@@ -1,582 +1,404 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ФарбоСвіт: Еко-Система (Pro)</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Охоронець природи</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+:root { --gold:#ffd23f; --leaf:#2ed573; --magic:#6746A1; --ink:#1d2a17; --panel:rgba(18,32,20,.9); --lav:#d8f5c8; }
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { font-family:'Nunito',sans-serif; background:#0d1a0f; color:#fff; display:flex; justify-content:center; align-items:center; user-select:none; -webkit-tap-highlight-color:transparent; }
+[hidden] { display:none !important; }
+button { font-family:inherit; }
+#game { position:relative; width:100%; max-width:600px; height:100%; max-height:920px; overflow:hidden; background:#000; box-shadow:0 0 60px rgba(0,0,0,.6); display:flex; flex-direction:column; }
+#bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:filter 1s; }
+#bg.foggy { filter:grayscale(.7) brightness(.8); }
+#shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,.05) 45%, rgba(10,20,8,.55) 100%); }
 
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #1a1a2e;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
-            user-select: none;
-            touch-action: none; /* Блокує зум на мобільних */
-        }
+/* HUD */
+#hud { position:relative; z-index:5; padding:8px 10px; display:flex; flex-direction:column; gap:6px; }
+.hrow { display:flex; align-items:center; gap:8px; }
+.icon-btn { background:rgba(0,0,0,.55); color:#fff; border:0; border-radius:50%; width:36px; height:36px; font-size:16px; cursor:pointer; display:grid; place-items:center; text-decoration:none; flex:0 0 36px; }
+#day { flex:1; font-weight:900; font-size:15px; text-shadow:0 2px 4px #000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pill { background:rgba(0,0,0,.6); border-radius:99px; padding:5px 11px; font-weight:900; font-size:15px; white-space:nowrap; }
+.tbar { height:10px; border-radius:99px; background:rgba(0,0,0,.5); overflow:hidden; border:1px solid rgba(255,255,255,.25); }
+.tbar i { display:block; height:100%; width:100%; background:linear-gradient(90deg,#ff9f43,#ffd23f); transition:width .25s linear; }
+.goalbar { height:14px; border-radius:99px; background:rgba(0,0,0,.5); overflow:hidden; border:2px solid rgba(255,255,255,.5); position:relative; }
+.goalbar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#ff6b9d,#feca57,#48dbfb,#1dd1a1,#a29bfe); transition:width .4s; }
 
-        /* --- UI Elements --- */
-        #game-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+/* дерево (день 5) */
+#tree { position:relative; z-index:4; margin:4px auto 0; width:96px; height:96px; border-radius:50%; overflow:hidden; border:4px solid var(--gold); background:#fff; box-shadow:0 0 calc(var(--g,0) * 1px) calc(var(--g,0) * .35px) rgba(255,230,120,.9); transition:box-shadow .5s, transform .5s; }
+#tree img { width:100%; height:100%; object-fit:cover; filter:saturate(calc(.3 + var(--p,0) * .9)); }
+#tree.pulse { transform:scale(1.1); }
 
-        #top-ui {
-            position: absolute; top: 0; left: 0; right: 0;
-            padding: 10px 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            pointer-events: none; /* Пропускає кліки крізь панель */
-        }
+/* сад */
+#garden { position:relative; z-index:3; flex:1; min-height:0; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(3, clamp(60px, 11.5vh, 96px)); gap:10px 8px; padding:6px 10px 10px; align-content:end; }
+.bed { position:relative; border:0; padding:0; cursor:pointer; border-radius:50% / 42%; height:100%;
+  background:radial-gradient(ellipse at 50% 65%, rgba(139,90,43,.95) 0%, rgba(107,66,32,.9) 55%, rgba(74,44,20,.85) 100%); box-shadow:inset 0 -6px 0 rgba(0,0,0,.3), 0 4px 8px rgba(0,0,0,.35); color:#fff; overflow:visible; }
+.bed .pl { position:absolute; left:50%; bottom:26%; transform:translateX(-50%); font-size:34px; line-height:1; transition:transform .3s; filter:drop-shadow(0 3px 2px rgba(0,0,0,.4)); }
+.bed .pl.s0 { font-size:22px; } .bed .pl.s1 { font-size:30px; } .bed .pl.s2 { font-size:36px; } .bed .pl.s3 { font-size:42px; animation:bloom 1.2s ease-in-out infinite; }
+@keyframes bloom { 50% { transform:translateX(-50%) scale(1.12) rotate(-4deg); } }
+.bed.ready { box-shadow:inset 0 -6px 0 rgba(0,0,0,.3), 0 0 0 3px var(--gold), 0 0 18px var(--gold); }
+.bed .wb { position:absolute; left:14%; right:14%; bottom:8%; height:6px; border-radius:99px; background:rgba(0,0,0,.45); overflow:hidden; }
+.bed .wb i { display:block; height:100%; background:#48dbfb; transition:width .25s; }
+.bed .thirst { position:absolute; top:-6px; right:-2px; font-size:20px; animation:hop .6s infinite; }
+@keyframes hop { 50% { transform:translateY(-5px); } }
+.bed .hint { position:absolute; inset:auto 0 32% 0; font-size:11px; font-weight:900; color:#ffe9a8; text-shadow:0 1px 2px #000; }
+.bed .pest { position:absolute; width:52%; aspect-ratio:1; border-radius:50%; object-fit:cover; border:3px solid #dfe6e9; background:#fff; z-index:2; animation:pop .3s; }
+.bed .pest.bug { top:-8%; left:-6%; }
+.bed .pest.spider { top:-12%; left:50%; transform:translateX(-50%); width:62%; }
+.bed .web { position:absolute; inset:0; border-radius:inherit; z-index:1; background:
+  repeating-conic-gradient(from 0deg at 50% 40%, rgba(255,255,255,.55) 0 2deg, transparent 2deg 30deg),
+  repeating-radial-gradient(circle at 50% 40%, transparent 0 9px, rgba(255,255,255,.5) 9px 10.5px); }
+.bed.fog .pl { filter:grayscale(1) brightness(.7); }
+.bed.wilt .pl { filter:grayscale(.8); }
+@keyframes pop { from { transform:scale(0); } }
+.bed .pest.spider { animation:none; }
+.fogcloud { position:absolute; z-index:4; width:34%; aspect-ratio:1; border-radius:50%; object-fit:cover; border:3px solid #a4b0be; opacity:.92; pointer-events:none; transition:left 1s linear; box-shadow:0 0 30px 18px rgba(160,170,180,.55); }
 
-        .quest-box {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 10px 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.2);
-            pointer-events: auto;
-            max-width: 50%;
-        }
-        .quest-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
-        .quest-goal { font-size: 14px; font-weight: bold; margin-top: 2px; }
+/* сили героїв */
+#powers { position:relative; z-index:5; display:flex; justify-content:center; gap:14px; padding:6px 10px 12px; background:var(--panel); border-top:3px solid var(--gold); }
+.pw { position:relative; width:66px; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:0; color:#fff; cursor:pointer; padding:0; }
+.pw .ring { position:relative; width:58px; height:58px; border-radius:50%; padding:3px; background:conic-gradient(var(--gold) calc(var(--cd,1) * 360deg), rgba(255,255,255,.15) 0); }
+.pw img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; background:#fff; }
+.pw .ic { position:absolute; right:-4px; bottom:-4px; font-size:20px; filter:drop-shadow(0 1px 2px #000); }
+.pw small { font-size:11px; font-weight:900; color:var(--lav); line-height:1.1; text-align:center; }
+.pw:disabled { cursor:default; } .pw:disabled img { filter:grayscale(1) brightness(.6); }
+.pw.locked small { color:#888; }
+.pw.ready .ring { animation:glow 1.4s infinite; }
+@keyframes glow { 50% { box-shadow:0 0 0 5px rgba(255,210,63,.35); } }
 
-        .stats-box {
-            display: flex; flex-direction: column; gap: 5px;
-            pointer-events: auto;
-        }
-        .stat-row { display: flex; align-items: center; gap: 8px; font-size: 18px; }
-        .bar-bg { width: 100px; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); }
-        .bar-fill { height: 100%; width: 50%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.fx { position:absolute; pointer-events:none; font-size:26px; font-weight:900; animation:fly .8s forwards; z-index:60; text-shadow:0 2px 4px #000; white-space:nowrap; }
+@keyframes fly { to { opacity:0; transform:translateY(-60px) scale(1.3); } }
+.rain { position:absolute; inset:0; z-index:6; pointer-events:none; background:repeating-linear-gradient(105deg, rgba(160,220,255,.0) 0 14px, rgba(160,220,255,.55) 14px 16px); animation:rain 1.2s linear forwards; }
+@keyframes rain { from { opacity:0; background-position:0 -200px; } 20% { opacity:1; } to { opacity:0; background-position:0 200px; } }
+.smoke { position:absolute; inset:0; z-index:6; pointer-events:none; background:linear-gradient(120deg, rgba(255,0,0,.25), rgba(255,165,0,.25), rgba(255,255,0,.25), rgba(0,200,0,.25), rgba(0,120,255,.25), rgba(140,0,255,.25)); animation:smoke 1.2s forwards; }
+@keyframes smoke { from { opacity:0; transform:scale(.6); } 40% { opacity:1; } to { opacity:0; transform:scale(1.3); } }
+.ring-wave { position:absolute; left:50%; top:60%; width:40px; height:40px; margin:-20px; border-radius:50%; border:4px solid var(--gold); z-index:6; pointer-events:none; animation:wave .9s forwards; }
+@keyframes wave { to { transform:scale(14); opacity:0; } }
 
-        /* --- CANVAS --- */
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            cursor: pointer;
-        }
+/* гість */
+.visitor { position:absolute; left:10px; right:10px; top:84px; z-index:20; display:flex; gap:10px; align-items:center; background:rgba(255,250,235,.96); color:var(--ink); border-radius:18px; padding:8px 12px; box-shadow:0 8px 20px rgba(0,0,0,.4); animation:slide 3.4s forwards; pointer-events:none; }
+.visitor img { width:54px; height:54px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); }
+.visitor b { display:block; font-size:13px; color:#6a3fb0; } .visitor span { font-size:14px; line-height:1.3; }
+@keyframes slide { 0% { transform:translateY(-140%); } 12%, 85% { transform:none; } 100% { transform:translateY(-140%); opacity:0; } }
 
-        /* --- CONTROLS --- */
-        #controls {
-            position: absolute; bottom: 20px;
-            display: flex; gap: 15px;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 10px 20px;
-            border-radius: 30px;
-            backdrop-filter: blur(5px);
-            z-index: 20;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .tool-btn {
-            width: 60px; height: 60px;
-            border: none; border-radius: 50%;
-            font-size: 28px; cursor: pointer;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.2);
-            transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-        .tool-btn:active { transform: scale(0.9); }
-        .tool-btn.active {
-            background: white; color: #333;
-            box-shadow: 0 0 15px white;
-            transform: translateY(-10px);
-        }
-        .tool-label {
-            position: absolute; bottom: -20px; 
-            font-size: 10px; font-weight: bold; 
-            color: white; opacity: 0; transition: 0.3s;
-            text-shadow: 0 2px 4px black;
-        }
-        .tool-btn.active .tool-label { opacity: 1; bottom: -25px; }
-
-        /* --- OVERLAYS --- */
-        #start-screen, #win-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 100; text-align: center;
-            padding: 20px; box-sizing: border-box;
-        }
-        h1 { font-size: 40px; margin: 0 0 10px; background: linear-gradient(45deg, #00f260, #0575E6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        p { margin-bottom: 30px; color: #ccc; max-width: 400px; line-height: 1.5; }
-        
-        .big-btn {
-            padding: 15px 40px; font-size: 18px; font-weight: bold;
-            border: none; border-radius: 50px;
-            background: linear-gradient(45deg, #00f260, #0575E6);
-            color: white; cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0, 242, 96, 0.3);
-            transition: transform 0.2s;
-        }
-        .big-btn:active { transform: scale(0.95); }
-
-    </style>
+/* екрани */
+.screen { position:absolute; inset:0; z-index:50; overflow-y:auto; display:flex; flex-direction:column; align-items:center; text-align:center; padding:22px 16px 26px;
+  background:radial-gradient(circle at 50% 0%, #2f6b38 0%, #163a1c 55%, #0d1a0f 100%); }
+.screen > * { flex-shrink:0; }
+.screen h1 { margin:6px 0 2px; color:var(--gold); font-size:28px; text-shadow:0 3px 0 #4a3800; }
+.screen h2 { margin:0 0 12px; color:var(--lav); font-size:14px; letter-spacing:3px; }
+.lead { color:#e6f5dc; max-width:440px; font-size:15px; line-height:1.45; margin:0 0 12px; }
+.seed { width:140px; height:140px; border-radius:50%; object-fit:cover; border:4px solid var(--gold); box-shadow:0 0 40px rgba(255,210,63,.5); animation:bob 2.6s ease-in-out infinite; background:#fff; }
+@keyframes bob { 50% { transform:translateY(-8px); } }
+.days { display:grid; gap:9px; width:100%; max-width:440px; }
+.dcard { display:flex; align-items:center; gap:12px; padding:8px; border-radius:16px; background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.12); color:#fff; text-align:left; cursor:pointer; }
+.dcard img { width:58px; height:58px; border-radius:12px; object-fit:cover; }
+.dcard b { display:block; font-size:15px; } .dcard small { color:var(--lav); font-size:12.5px; }
+.dcard .st { margin-left:auto; white-space:nowrap; font-size:15px; }
+.dcard.locked { opacity:.45; cursor:default; } .dcard.locked img { filter:grayscale(1) blur(1px); }
+.btn { width:100%; max-width:440px; padding:14px; border:0; border-radius:14px; font-weight:900; font-size:16px; cursor:pointer; color:#fff; background:var(--magic); box-shadow:0 4px 0 rgba(0,0,0,.3); margin-top:10px; }
+.btn:active { transform:translateY(3px); box-shadow:none; }
+.btn.gold { background:linear-gradient(135deg,#ffe066,#f6b93b); color:#3a2a00; }
+.btn.ghost { background:rgba(255,255,255,.12); }
+.talk { display:flex; gap:12px; align-items:flex-start; text-align:left; max-width:440px; background:rgba(0,0,0,.3); border-radius:16px; padding:10px; margin:4px 0; }
+.talk img { width:54px; height:54px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); flex:0 0 54px; background:#fff; }
+.talk b { color:var(--gold); font-size:12.5px; text-transform:uppercase; display:block; } .talk span { font-size:14.5px; line-height:1.4; color:#eefae6; }
+.tips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:440px; margin:6px 0; }
+.tips span { background:rgba(255,255,255,.1); border-radius:99px; padding:5px 10px; font-size:13px; }
+.stars-big { font-size:42px; letter-spacing:6px; margin:6px 0; } .stars-big span { display:inline-block; animation:pop .5s backwards; } .stars-big .off { filter:grayscale(1); opacity:.3; }
+.final-art { width:min(320px,86%); border-radius:20px; border:4px solid var(--gold); box-shadow:0 0 50px rgba(255,210,63,.5); animation:pop .8s; }
+@media (max-height:660px) { .bed .pl.s3 { font-size:34px; } .pw .ring { width:48px; height:48px; } #tree { width:70px; height:70px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition:none !important; } }
+</style>
 </head>
 <body>
-
-    <div id="game-wrapper">
-        <canvas id="gameCanvas"></canvas>
-
-        <div id="top-ui">
-            <div class="quest-box">
-                <div class="quest-title" id="lvl-title">Рівень 1</div>
-                <div class="quest-goal" id="lvl-goal">Завантаження...</div>
-            </div>
-            <div class="stats-box">
-                <div class="stat-row">
-                    ☀️ <div class="bar-bg"><div id="sun-bar" class="bar-fill" style="background: linear-gradient(90deg, #f12711, #f5af19);"></div></div>
-                </div>
-                <div class="stat-row">
-                    💧 <div class="bar-bg"><div id="water-bar" class="bar-fill" style="background: linear-gradient(90deg, #00c6ff, #0072ff);"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="controls">
-            <button class="tool-btn active" onclick="setTool('sun')">☀️<span class="tool-label">Сонце</span></button>
-            <button class="tool-btn" onclick="setTool('water')">🌧️<span class="tool-label">Дощ</span></button>
-            <button class="tool-btn" onclick="setTool('plant')">🌱<span class="tool-label">Саджати</span></button>
-            <button class="tool-btn" onclick="setTool('animal')">🐇<span class="tool-label">Фауна</span></button>
-            <button class="tool-btn" onclick="setTool('clean')">🧹<span class="tool-label">Прибрати</span></button>
-        </div>
-
-        <div id="start-screen">
-            <h1>ФАРБО СВІТ</h1>
-            <p>Стань охоронцем природи. Керуй погодою, вирощуй ліси та рятуй тварин.</p>
-            <button class="big-btn" onclick="startGame()">ПОЧАТИ ГРУ</button>
-        </div>
-
-        <div id="win-screen" style="display: none;">
-            <h1>РІВЕНЬ ПРОЙДЕНО!</h1>
-            <p id="win-msg">Природа вдячна тобі.</p>
-            <button class="big-btn" onclick="nextLevel()">НАСТУПНИЙ РІВЕНЬ</button>
-        </div>
+<div id="game">
+  <img id="bg" alt="">
+  <div id="shade"></div>
+  <div id="hud" hidden>
+    <div class="hrow">
+      <button class="icon-btn" onclick="toMenu()" aria-label="До списку днів">🏡</button>
+      <div id="day"></div>
+      <div class="pill" id="dreams">🌈 0/0</div>
     </div>
+    <div class="goalbar" title="Кольорові мрії"><i id="goal"></i></div>
+    <div class="tbar" title="Час дня"><i id="time"></i></div>
+  </div>
+  <div id="tree" hidden><img alt="Насіння Емпатії"></div>
+  <div id="garden" hidden></div>
+  <div id="powers" hidden></div>
+  <div id="screen" class="screen"></div>
+</div>
 
-    <script>
-        // --- AUDIO ENGINE (Синтез звуків без файлів) ---
-        const AudioFX = {
-            ctx: null,
-            init: function() {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-            },
-            playTone: function(freq, type, duration, vol=0.1) {
-                if(!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
-            },
-            playNoise: function(duration, vol=0.2) {
-                if(!this.ctx) return;
-                const bufferSize = this.ctx.sampleRate * duration;
-                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+<script>
+/* ═════════ картинки з saga3 ═════════ */
+const R = '../../';
+const IMG = {
+  fin: R + 'assets/img/heroes/fin.jpg', crash: R + 'assets/img/heroes/crash.jpg', luna: R + 'assets/img/heroes/luna.jpg',
+  v: (id, a) => `${R}assets/img/villains/${id}-${a ? 'after' : 'before'}-s.jpg`,
+  f: (id, r) => `${R}assets/img/friends/${id}-${r ? 'react' : 'pose'}-s.jpg`,
+  seed: R + 'assets/img/artifacts/empathy_seed-s.jpg',
+  treeDone: R + 'books/A06/p01-s.jpg',
+};
+const FLOWERS = ['🌷', '🌻', '🌸', '🌼', '🌺', '🪻'];
 
-                const noise = this.ctx.createBufferSource();
-                noise.buffer = buffer;
-                const gain = this.ctx.createGain();
-                gain.gain.value = vol;
-                
-                // Lowpass filter для звуку дощу/вітру
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.value = 800;
+/* ═════════ п'ять днів у Зачарованому саду ═════════ */
+const DAYS = [
+  { name: 'Перші паростки', bg: 'books/A04/p02-s.jpg', goal: 8, time: 60, pests: [], powers: ['luna'],
+    talk: ['luna', 'Луна', 'Посади насінинку, полий, коли просить пити 💧, і збери квітку, коли засяє. Кожна квітка — кольорова мрія! Якщо забудеш полити, паросток зів’яне.'] },
+  { name: 'Сонні Жучки', bg: 'books/A02/p06-s.jpg', goal: 10, time: 65, pests: ['bug'], powers: ['luna', 'crash'],
+    talk: ['crash', 'Краш', 'Ой, прилетіли Сонні Жучки! Вони присипляють квіти — і ті перестають рости. Торкнись жучка або задзвени моїм дзвіночком — і всі прокинуться!'] },
+  { name: 'Лінивий Павук', bg: 'books/A06/p03-s.jpg', goal: 12, time: 70, pests: ['bug', 'web'], powers: ['luna', 'crash', 'fin'],
+    talk: ['fin', 'Фін', 'Лінивий Павук обплітає грядки павутиною, щоб мрії були тільки його. Торкнись павутини тричі або видихну веселковий дим! А може, Павук просто хоче дружити?'] },
+  { name: 'Сірий туман', bg: 'books/A02/p05-s.jpg', goal: 14, time: 75, pests: ['bug', 'web', 'fog'], powers: ['luna', 'crash', 'fin'],
+    talk: ['luna', 'Луна', 'НаноПут насуває сірий туман. Під ним квіти сіріють і швидко сохнуть. Туман розганяє тільки веселковий дим Фіна — бережи його для туману!'] },
+  { name: 'Дерево Кольорових Мрій', bg: 'books/A06/p02-s.jpg', goal: 20, time: 95, pests: ['bug', 'web', 'fog'], powers: ['luna', 'crash', 'fin'], tree: true,
+    talk: ['luna', 'Луна', 'Це Насіння Емпатії! Кожна зібрана мрія летить до нього. Збери 20 мрій — і виросте Дерево Кольорових Мрій. Тепер усі шкідники разом, тримайся!'] },
+];
+const POWERS = {
+  luna:  { name: 'Дощ', ic: '💧', cd: 14, img: IMG.luna, who: 'Луна' },
+  crash: { name: 'Дзвіночок', ic: '🔔', cd: 12, img: IMG.crash, who: 'Краш' },
+  fin:   { name: 'Дим', ic: '🌈', cd: 16, img: IMG.fin, who: 'Фін' },
+};
+const VISITORS = [
+  ['hedgehog', 'Їжачок', 'Яка краса! Я приніс тобі ще одну мрію з лісу.'],
+  ['smishynky', 'Смішинки', 'Хі-хі-хі! Твій сад такий веселий — тримай мрію!'],
+  ['marmalade_granny', 'Мармеладна бабуся', 'Ці квіти пахнуть, як мої льодяники! Ось тобі мрія.'],
+  ['owl', 'Сова-Всезнайка', 'Справжній садівник — це терпіння і турбота. Даруй мрію!'],
+];
 
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.ctx.destination);
-                noise.start();
-            },
-            // Presets
-            soundRain: function() { this.playNoise(0.2, 0.1); },
-            soundPlant: function() { this.playTone(300, 'sine', 0.1, 0.2); this.playTone(400, 'sine', 0.2, 0.1); },
-            soundSun: function() { this.playTone(100, 'triangle', 0.5, 0.05); },
-            soundWin: function() { 
-                [440, 554, 659, 880].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.5, 0.2), i*100));
-            },
-            soundClean: function() { this.playTone(150, 'sawtooth', 0.1, 0.1); },
-            soundRabbit: function() { this.playTone(800, 'square', 0.1, 0.05); }
-        };
+/* ═════════ збереження ═════════ */
+const KEY = 'sv:eco';
+let save = { stars: {} };
+try { Object.assign(save, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} };
 
-        // --- GAME ENGINE ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
+/* ═════════ звук ═════════ */
+const AU = {
+  ctx: null,
+  init() { try { this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} },
+  tone(f, t = 'sine', d = .2, v = .07) {
+    if (!this.ctx) return; const o = this.ctx.createOscillator(), g = this.ctx.createGain(), n = this.ctx.currentTime;
+    o.type = t; o.frequency.setValueAtTime(f, n); g.gain.setValueAtTime(v, n); g.gain.exponentialRampToValueAtTime(.001, n + d); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(n + d);
+  },
+  noise(d = .8, v = .08) {
+    if (!this.ctx) return; const b = this.ctx.createBuffer(1, this.ctx.sampleRate * d, this.ctx.sampleRate), c = b.getChannelData(0);
+    for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * (1 - i / c.length);
+    const s = this.ctx.createBufferSource(), g = this.ctx.createGain(), f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1200; g.gain.value = v;
+    s.buffer = b; s.connect(f); f.connect(g); g.connect(this.ctx.destination); s.start();
+  },
+  plant() { this.tone(330, 'sine', .12); setTimeout(() => this.tone(440, 'sine', .15), 70); },
+  water() { this.tone(1200, 'sine', .08, .05); setTimeout(() => this.tone(900, 'sine', .1, .05), 60); },
+  pick() { [784, 988, 1175].forEach((f, i) => setTimeout(() => this.tone(f, 'triangle', .18, .06), i * 60)); },
+  bad() { this.tone(180, 'sawtooth', .3, .06); },
+  bell() { [1318, 1760, 1318, 1568].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', .45, .06), i * 90)); },
+  win() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => this.tone(f, 'sine', .3, .08), i * 110)); },
+};
 
-        // Налаштування Canvas
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+/* ═════════ стан ═════════ */
+const $ = (id) => document.getElementById(id);
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+let D = null, loop = null;
+const N = 12;
 
-        // --- LEVELS ---
-        const levels = [
-            {
-                id: 1,
-                title: "Рівень 1: Пробудження",
-                desc: "Посади 5 дерев. Слідкуй за балансом сонця і води!",
-                goal: (s) => countType(s, 'tree') >= 5,
-                text: "Вирости 5 дерев: {val}/5"
-            },
-            {
-                id: 2,
-                title: "Рівень 2: Життя",
-                desc: "Створи ліс та засели 3 зайців.",
-                goal: (s) => countType(s, 'rabbit') >= 3,
-                text: "Засели 3 зайців: {val}/3"
-            },
-            {
-                id: 3,
-                title: "Рівень 3: Еколог",
-                desc: "Прибери 5 куп сміття, не знищивши ліс.",
-                goal: (s) => s.cleaned >= 5 && countType(s, 'tree') >= 3,
-                text: "Прибери сміття: {val}/5"
-            }
-        ];
+function fx(el, t, color) {
+  const g = $('game').getBoundingClientRect(), b = el.getBoundingClientRect(), f = document.createElement('div');
+  f.className = 'fx'; f.textContent = t; f.style.left = (b.left - g.left + b.width / 2 - 14) + 'px'; f.style.top = (b.top - g.top) + 'px'; if (color) f.style.color = color;
+  $('game').appendChild(f); setTimeout(() => f.remove(), 800);
+}
+function overlay(cls, ms = 1200) { const o = document.createElement('div'); o.className = cls; $('game').appendChild(o); setTimeout(() => o.remove(), ms); }
 
-        // --- STATE ---
-        let state = {
-            levelIdx: 0,
-            sun: 50,
-            water: 50,
-            objects: [], // trees, rabbits, trash
-            particles: [], // rain
-            tool: 'sun',
-            cleaned: 0,
-            playing: false,
-            time: 0
-        };
+/* ═════════ меню ═════════ */
+const unlocked = (i) => i === 0 || (save.stars[i - 1] || 0) > 0;
+function toMenu() {
+  stop(); ['hud', 'garden', 'powers', 'tree'].forEach((id) => $(id).hidden = true);
+  $('bg').src = R + 'books/A06/p01-s.jpg';
+  const total = DAYS.reduce((s, _, i) => s + (save.stars[i] || 0), 0);
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `<a class="icon-btn" href="../../school.html" style="position:absolute;top:12px;left:12px" aria-label="Назад">✕</a>
+    <img class="seed" src="${IMG.seed}" alt="Насіння Емпатії">
+    <h1>ОХОРОНЕЦЬ ПРИРОДИ</h1><h2>ЗАЧАРОВАНИЙ САД</h2>
+    <p class="lead">НаноПут і його помічники хочуть, щоб сад посірів. Вирощуй квіти, збирай кольорові мрії, захищай грядки від шкідників — і за п’ять днів виросте Дерево Кольорових Мрій!</p>
+    <div class="days">${DAYS.map((d, i) => { const st = save.stars[i] || 0, op = unlocked(i);
+      return `<button class="dcard ${op ? '' : 'locked'}" ${op ? `onclick="intro(${i})"` : 'disabled'}><img src="${R + d.bg}" alt=""><span><b>День ${i + 1}. ${d.name}</b><small>${op ? `Мета: ${d.goal} мрій` : '🔒 пройди попередній день'}</small></span><span class="st">${'⭐'.repeat(st)}<span style="opacity:.3">${'⭐'.repeat(3 - st)}</span></span></button>`; }).join('')}</div>
+    <p class="lead" style="margin-top:12px">⭐ ${total} з 15</p>`;
+}
 
-        // --- PARTICLES SYSTEM (Дощ) ---
-        class RainDrop {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * -height;
-                this.speed = Math.random() * 10 + 10;
-                this.len = Math.random() * 20 + 10;
-            }
-            update() {
-                this.y += this.speed;
-                if (this.y > height) {
-                    this.y = Math.random() * -50;
-                    this.x = Math.random() * width;
-                }
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
-                ctx.lineWidth = 2;
-                ctx.moveTo(this.x, this.y);
-                ctx.lineTo(this.x, this.y + this.len);
-                ctx.stroke();
-            }
-        }
+function intro(i) {
+  AU.init(); stop();
+  const d = DAYS[i], [who, name, text] = d.talk;
+  $('bg').src = R + d.bg;
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `<h2 style="margin-top:8px">ДЕНЬ ${i + 1}</h2><h1>${d.name}</h1>
+    <div class="talk"><img src="${IMG[who]}" alt=""><div><b>${name}</b><span>${text}</span></div></div>
+    <div class="tips"><span>🌰 торкнись грядки — посадити</span><span>💧 — полити</span><span>✨ — зібрати мрію</span>
+      ${d.pests.includes('bug') ? '<span>🐞 торкнись жучка</span>' : ''}${d.pests.includes('web') ? '<span>🕸️ 3 дотики до павутини</span>' : ''}${d.pests.includes('fog') ? '<span>🌫️ туман — тільки 🌈 Фін</span>' : ''}</div>
+    <p class="lead">Мета: <b style="color:var(--gold)">${d.goal} кольорових мрій</b> за ${d.time} секунд.</p>
+    <button class="btn gold" onclick="startDay(${i})">🌱 ПОЧАТИ ДЕНЬ</button>
+    <button class="btn ghost" onclick="toMenu()">🏡 ДО СПИСКУ ДНІВ</button>`;
+}
 
-        // --- ENTITIES ---
-        class Entity {
-            constructor(type, x, y) {
-                this.type = type;
-                this.x = x;
-                this.y = y;
-                this.scale = 0.1; // Анімація появи
-                this.status = 'alive';
-                this.dir = Math.random() > 0.5 ? 1 : -1;
-                this.hopY = 0; // Для стрибків зайця
-            }
-            update() {
-                // Анімація росту
-                if (this.scale < 1) this.scale += 0.05;
+/* ═════════ день ═════════ */
+function startDay(i) {
+  stop();
+  const d = DAYS[i];
+  D = { i, d, beds: Array.from({ length: N }, () => ({ s: 'empty' })), dreams: 0, left: d.time, wilted: 0, cd: {}, fogs: [], webs: 0, spiderFriend: false, nextPest: 6, nextFog: 10, visitorAt: 3 };
+  $('bg').src = R + d.bg;
+  $('screen').hidden = true; ['hud', 'garden', 'powers'].forEach((id) => $(id).hidden = false);
+  $('tree').hidden = !d.tree; if (d.tree) { $('tree').querySelector('img').src = IMG.seed; growTree(); }
+  $('day').textContent = `День ${i + 1} · ${d.name}`;
+  $('garden').innerHTML = D.beds.map((_, k) => `<button class="bed" id="b${k}" aria-label="Грядка ${k + 1}"></button>`).join('');
+  D.beds.forEach((_, k) => $('b' + k).onpointerdown = (e) => { e.preventDefault(); tapBed(k); });
+  $('powers').innerHTML = ['luna', 'crash', 'fin'].map((p) => { const P = POWERS[p], on = d.powers.includes(p);
+    return `<button class="pw ${on ? '' : 'locked'}" id="p-${p}" ${on ? '' : 'disabled'} aria-label="${P.who}: ${P.name}"><span class="ring"><img src="${P.img}" alt=""><span class="ic">${on ? P.ic : '🔒'}</span></span><small>${P.who}<br>${P.name}</small></button>`; }).join('');
+  d.powers.forEach((p) => { D.cd[p] = 0; $('p-' + p).onclick = () => usePower(p); });
+  render(); loop = setInterval(tick, 250);
+}
+function stop() { clearInterval(loop); loop = null; document.querySelectorAll('.fogcloud,.visitor').forEach((e) => e.remove()); $('bg').classList.remove('foggy'); }
 
-                if (this.type === 'rabbit') {
-                    // Логіка стрибків
-                    if (this.status === 'alive') {
-                        this.x += this.dir * 1.5;
-                        this.hopY = Math.abs(Math.sin(Date.now() / 100)) * -15; // Стрибок
-                        
-                        // Відштовхування від стін
-                        if (this.x > width - 30) this.dir = -1;
-                        if (this.x < 30) this.dir = 1;
-                    }
-                }
-                
-                // Смерть від поганих умов
-                let isBad = state.sun > 85 || state.water > 85;
-                if (this.type === 'tree' && isBad) this.status = 'dead';
-                if (this.type === 'rabbit' && (countType(state, 'tree') < 1 || isBad)) this.status = 'gone';
-            }
-            draw() {
-                ctx.save();
-                ctx.translate(this.x, this.y + this.hopY);
-                ctx.scale(this.scale, this.scale);
-                
-                // Тінь
-                ctx.fillStyle = "rgba(0,0,0,0.2)";
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 20, 5, 0, 0, Math.PI*2);
-                ctx.fill();
+const TICK = .25;
+function tick() {
+  if (!D) return;
+  D.left -= TICK;
+  // рослини
+  D.beds.forEach((b, k) => {
+    if (b.s !== 'plant') return;
+    const fog = D.fogs.some((f) => f.cols.includes(k % 4));
+    b.fog = fog;
+    if (b.web) return;
+    b.water = Math.max(0, b.water - (fog ? 3.6 : 1.6) * (b.g >= 100 ? 0 : 1));
+    if (b.water > 0 && !b.bug && b.g < 100) b.g = Math.min(100, b.g + 1.35);
+    if (b.water <= 0 && b.g < 100) { b.dry = (b.dry || 0) + TICK; if (b.dry > 5) { b.s = 'wilt'; D.wilted++; AU.bad(); } } else b.dry = 0;
+  });
+  // шкідники
+  const pests = D.d.pests;
+  if (pests.length && (D.nextPest -= TICK) <= 0) {
+    D.nextPest = D.d.tree ? rnd(4, 6) : rnd(5, 8);
+    const kinds = pests.filter((p) => p !== 'fog'); const kind = kinds[rnd(0, kinds.length - 1)];
+    if (kind === 'bug') { const c = D.beds.map((b, k) => k).filter((k) => D.beds[k].s === 'plant' && !D.beds[k].bug && !D.beds[k].web && D.beds[k].g < 100); if (c.length) D.beds[c[rnd(0, c.length - 1)]].bug = true; }
+    if (kind === 'web' && !D.spiderFriend) { const c = D.beds.map((b, k) => k).filter((k) => !D.beds[k].web && D.beds[k].s !== 'wilt'); if (c.length) { const b = D.beds[c[rnd(0, c.length - 1)]]; b.web = 3; } }
+  }
+  if (pests.includes('fog') && (D.nextFog -= TICK) <= 0) { D.nextFog = rnd(12, 16); spawnFog(); }
+  D.fogs.forEach((f) => { f.t -= TICK; });
+  D.fogs.filter((f) => f.t <= 0).forEach((f) => f.el.remove()); D.fogs = D.fogs.filter((f) => f.t > 0);
+  $('bg').classList.toggle('foggy', D.fogs.length > 0);
+  // сили
+  Object.keys(D.cd).forEach((p) => { D.cd[p] = Math.max(0, D.cd[p] - TICK); });
+  render();
+  if (D.left <= 0) lose();
+}
 
-                // Малювання емодзі по центру
-                ctx.font = "40px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "bottom";
-                
-                let char = "";
-                if (this.type === 'tree') char = this.status === 'alive' ? "🌳" : "🍂";
-                if (this.type === 'rabbit') char = "🐇";
-                if (this.type === 'trash') char = "🗑️";
+function spawnFog() {
+  const col = rnd(0, 2), el = document.createElement('img');
+  el.className = 'fogcloud'; el.src = IMG.v('nanoput'); el.alt = '';
+  const gt = $('game').getBoundingClientRect().top, row = rnd(0, 1), bt = $('b' + row * 4).getBoundingClientRect().top - gt;
+  el.style.left = (col * 25 + 4) + '%'; el.style.top = (bt - 10) + 'px';
+  $('game').appendChild(el);
+  D.fogs.push({ el, cols: [col, col + 1], t: 11 });
+}
 
-                // Ефект тремтіння якщо втікає
-                if (this.status === 'gone') {
-                    ctx.globalAlpha = 0.5;
-                    char = "💨";
-                }
+/* дотик до грядки — одна дія залежно від стану */
+function tapBed(k) {
+  if (!D) return;
+  const b = D.beds[k], el = $('b' + k);
+  if (b.web) { b.web--; AU.tone(500 + b.web * 120, 'triangle', .1); fx(el, b.web ? '🕸️' : '✂️');
+    if (!b.web) webCleared(el); render(); return; }
+  if (b.bug) { b.bug = false; AU.tone(1400, 'sine', .15, .05); fx(el, '☀️'); render(); return; }
+  if (b.s === 'empty') { Object.assign(b, { s: 'plant', g: 0, water: 55, f: FLOWERS[rnd(0, FLOWERS.length - 1)], dry: 0 }); AU.plant(); fx(el, '🌰'); }
+  else if (b.s === 'wilt') { b.s = 'empty'; AU.tone(260, 'sine', .1); fx(el, '🧹'); }
+  else if (b.g >= 100) { harvest(k); }
+  else if (b.water < 100) { b.water = 100; AU.water(); fx(el, '💧', '#9be7ff'); }
+  render();
+}
+function webCleared(el) {
+  D.webs++;
+  if (D.webs === 3 && !D.spiderFriend) {
+    D.spiderFriend = true; D.dreams += 2; visitor(IMG.v('spider', true), 'Лінивий Павук', 'Вибачте! Я більше не плестиму павутину на грядках — краще допоможу вибирати найкрасивіші мрії. Тримай дві!');
+  }
+}
+function harvest(k) {
+  const b = D.beds[k], el = $('b' + k);
+  D.beds[k] = { s: 'empty' }; D.dreams++; AU.pick(); fx(el, '+1 ' + b.f);
+  if (D.d.tree) { $('tree').classList.add('pulse'); setTimeout(() => $('tree').classList.remove('pulse'), 300); }
+  if (D.dreams === D.visitorAt || (D.dreams > D.visitorAt && D.dreams % 5 === 0 && D.dreams < D.d.goal)) {
+    const [id, name, text] = VISITORS[rnd(0, VISITORS.length - 1)]; D.dreams++; visitor(IMG.f(id, true), name, text);
+  }
+  if (D.dreams >= D.d.goal) win();
+}
+function visitor(img, name, text) {
+  document.querySelectorAll('.visitor').forEach((e) => e.remove());
+  const v = document.createElement('div'); v.className = 'visitor'; v.innerHTML = `<img src="${img}" alt=""><div><b>${name}</b><span>${text}</span></div>`;
+  $('game').appendChild(v); setTimeout(() => v.remove(), 3500); AU.win();
+}
 
-                ctx.fillText(char, 0, 0);
-                ctx.restore();
-            }
-        }
+function usePower(p) {
+  if (!D || D.cd[p] > 0) return;
+  D.cd[p] = POWERS[p].cd;
+  if (p === 'luna') { overlay('rain'); AU.noise(1, .07); D.beds.forEach((b) => { if (b.s === 'plant') b.water = 100; }); }
+  if (p === 'crash') { overlay('ring-wave', 900); AU.bell(); D.beds.forEach((b) => { b.bug = false; }); }
+  if (p === 'fin') { overlay('smoke'); AU.win(); D.fogs.forEach((f) => f.el.remove()); D.fogs = []; D.beds.forEach((b, k) => { if (b.web) { b.web = 0; webCleared($('b' + k)); } }); }
+  render();
+}
 
-        function countType(s, t) {
-            return s.objects.filter(o => o.type === t && o.status === 'alive').length;
-        }
+function render() {
+  if (!D) return;
+  D.beds.forEach((b, k) => {
+    const el = $('b' + k); if (!el) return;
+    let html = '';
+    if (b.s === 'plant') {
+      const st = b.g >= 100 ? 3 : b.g >= 65 ? 2 : b.g >= 30 ? 1 : 0;
+      html += `<span class="pl s${st}"${st === 2 ? ' style="filter:saturate(.25) brightness(.9)"' : ''}>${['🌱', '🌿', b.f, b.f][st]}</span>`;
+      if (st < 3) html += `<span class="wb"><i style="width:${b.water}%"></i></span>`;
+      if (st < 3 && b.water < 30 && !b.web) html += `<span class="thirst">💧</span>`;
+      if (b.bug) html += `<img class="pest bug" src="${IMG.v('sleepy_bugs')}" alt="Сонний жучок">`;
+    } else if (b.s === 'wilt') html += `<span class="pl s1">🥀</span><span class="hint" style="bottom:4%">прибрати</span>`;
+    else html += `<span class="hint" style="opacity:.8;font-size:20px;bottom:30%">🌰</span>`;
+    if (b.web) html += `<span class="web"></span><img class="pest spider" src="${IMG.v('spider')}" alt="Лінивий Павук" style="opacity:${.5 + b.web * .17}">`;
+    el.innerHTML = html;
+    el.classList.toggle('ready', b.s === 'plant' && b.g >= 100 && !b.web);
+    el.classList.toggle('fog', !!b.fog && b.s === 'plant');
+    el.classList.toggle('wilt', b.s === 'wilt');
+  });
+  $('dreams').textContent = `🌈 ${Math.min(D.dreams, D.d.goal)}/${D.d.goal}`;
+  $('goal').style.width = Math.min(100, D.dreams / D.d.goal * 100) + '%';
+  $('time').style.width = Math.max(0, D.left / D.d.time * 100) + '%';
+  D.d.powers.forEach((p) => { const b = $('p-' + p); if (!b) return; const c = D.cd[p] / POWERS[p].cd; b.querySelector('.ring').style.setProperty('--cd', 1 - c); b.classList.toggle('ready', c === 0); b.disabled = c > 0; });
+  if (D.d.tree) growTree();
+}
+function growTree() { const p = Math.min(1, D.dreams / D.d.goal), t = $('tree'); t.style.setProperty('--p', p); t.style.setProperty('--g', p * 50); }
 
-        // --- INPUT HANDLING ---
-        function handleInput(x, y) {
-            if (!state.playing) return;
+/* ═════════ кінець дня ═════════ */
+function win() {
+  const d = D.d, i = D.i, stars = D.wilted === 0 ? 3 : D.wilted <= 2 ? 2 : 1;
+  stop(); const wilted = D.wilted; D = null;
+  save.stars[i] = Math.max(save.stars[i] || 0, stars); persist(); AU.win();
+  const sc = $('screen'); sc.hidden = false;
+  const last = i === DAYS.length - 1;
+  sc.innerHTML = last
+    ? `<h2 style="margin-top:8px">ФІНАЛ</h2><h1>ДЕРЕВО КОЛЬОРОВИХ МРІЙ</h1>
+       <img class="final-art" src="${IMG.treeDone}" alt="Дерево Кольорових Мрій">
+       <div class="stars-big">${[0, 1, 2].map((k) => `<span class="${k < stars ? '' : 'off'}" style="animation-delay:${.3 + k * .25}s">⭐</span>`).join('')}</div>
+       <p class="lead">Насіння Емпатії проросло! Дерево Кольорових Мрій засяяло вогниками, і діти з усієї СилаВолії прибігли гратися під ним. Звання «Охоронець природи» — твоє!</p>
+       <button class="btn gold" onclick="startDay(${i})">↻ ЗІГРАТИ ЩЕ РАЗ</button><button class="btn ghost" onclick="toMenu()">🏡 ДО СПИСКУ ДНІВ</button>`
+    : `<h2 style="margin-top:8px">ДЕНЬ ${i + 1} ПРОЙДЕНО</h2><h1>${d.name}</h1>
+       <div class="stars-big">${[0, 1, 2].map((k) => `<span class="${k < stars ? '' : 'off'}" style="animation-delay:${.2 + k * .25}s">⭐</span>`).join('')}</div>
+       <p class="lead">${stars === 3 ? 'Жодна квітка не зів’яла — бездоганно!' : `Зів’яло квіток: ${wilted}. Для трьох зірок поливай вчасно!`}</p>
+       <button class="btn gold" onclick="intro(${i + 1})">▶ ДЕНЬ ${i + 2}: ${DAYS[i + 1].name}</button>
+       <button class="btn" onclick="startDay(${i})">↻ ПЕРЕГРАТИ</button><button class="btn ghost" onclick="toMenu()">🏡 ДО СПИСКУ ДНІВ</button>`;
+}
+function lose() {
+  const i = D.i, got = D.dreams, goal = D.d.goal; stop(); D = null; AU.bad();
+  const sc = $('screen'); sc.hidden = false;
+  sc.innerHTML = `<h2 style="margin-top:8px">ДЕНЬ ЗАКІНЧИВСЯ</h2><h1>Ще трішки!</h1>
+    <div class="talk"><img src="${IMG.luna}" alt=""><div><b>Луна</b><span>Зібрано ${got} з ${goal} мрій. Порада: саджай одразу кілька грядок і клич на допомогу героїв!</span></div></div>
+    <button class="btn gold" onclick="startDay(${i})">↻ СПРОБУВАТИ ЩЕ</button><button class="btn ghost" onclick="toMenu()">🏡 ДО СПИСКУ ДНІВ</button>`;
+}
 
-            // Координати землі (нижня третина екрану)
-            const groundLevel = height * 0.75; 
-
-            if (state.tool === 'sun') {
-                state.sun = Math.min(state.sun + 5, 100);
-                state.water = Math.max(state.water - 2, 0);
-                AudioFX.soundSun();
-            } else if (state.tool === 'water') {
-                state.water = Math.min(state.water + 5, 100);
-                state.sun = Math.max(state.sun - 2, 0);
-                // Звук дощу генерується в циклі оновлення
-            } else if (y > height * 0.6) { // Тільки на землі
-                if (state.tool === 'plant') {
-                    state.objects.push(new Entity('tree', x, groundLevel + Math.random()*50));
-                    AudioFX.soundPlant();
-                } else if (state.tool === 'animal') {
-                    if (countType(state, 'tree') >= 2) {
-                        state.objects.push(new Entity('rabbit', x, groundLevel + Math.random()*50));
-                        AudioFX.soundRabbit();
-                    } else {
-                        showFloatingText(x, y, "Треба ліс!");
-                    }
-                } else if (state.tool === 'clean') {
-                    // Пошук сміття поруч
-                    let hit = false;
-                    state.objects = state.objects.filter(o => {
-                        let dist = Math.hypot(o.x - x, o.y - y);
-                        if (o.type === 'trash' && dist < 60) {
-                            state.cleaned++;
-                            hit = true;
-                            return false;
-                        }
-                        return true;
-                    });
-                    if(hit) AudioFX.soundClean();
-                }
-            }
-        }
-
-        // Миша
-        canvas.addEventListener('mousedown', e => handleInput(e.clientX, e.clientY));
-        // Тачскрін
-        canvas.addEventListener('touchstart', e => {
-            e.preventDefault();
-            handleInput(e.touches[0].clientX, e.touches[0].clientY);
-        }, {passive: false});
-
-        function setTool(t) {
-            state.tool = t;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        }
-
-        // --- GAME LOOP ---
-        function update() {
-            if (!state.playing) return;
-            state.time++;
-
-            // Natural decay
-            if (state.time % 20 === 0) {
-                if (state.sun > 10) state.sun -= 0.2;
-                if (state.water > 10) state.water -= 0.2;
-            }
-
-            // Дощ (створення крапель)
-            if (state.water > 60) {
-                if(Math.random() > 0.5) state.particles.push(new RainDrop());
-                if(state.time % 10 === 0) AudioFX.soundRain(); // Звук дощу
-            }
-            state.particles.forEach(p => p.update());
-            state.particles = state.particles.filter(p => p.y < height + 50);
-
-            // Генерація сміття (Рівень 3)
-            if (levels[state.levelIdx].id === 3 && Math.random() > 0.99 && countType(state, 'trash') < 10) {
-                const groundLevel = height * 0.75;
-                state.objects.push(new Entity('trash', Math.random()*width, groundLevel + Math.random()*50));
-            }
-
-            // Оновлення об'єктів
-            state.objects.forEach(o => o.update());
-            state.objects = state.objects.filter(o => o.status !== 'gone');
-
-            // UI Update
-            document.getElementById('sun-bar').style.width = state.sun + "%";
-            document.getElementById('water-bar').style.width = state.water + "%";
-            
-            // Check Win
-            let lvl = levels[state.levelIdx];
-            let val = 0;
-            if (lvl.id === 1) val = countType(state, 'tree');
-            if (lvl.id === 2) val = countType(state, 'rabbit');
-            if (lvl.id === 3) val = state.cleaned;
-            
-            document.getElementById('lvl-goal').innerText = lvl.text.replace("{val}", val);
-
-            if (lvl.goal(state)) {
-                winLevel();
-            }
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, width, height);
-
-            // 1. Небо (Градієнт)
-            let skyTop = state.sun > 70 ? "#4facfe" : "#1e3c72";
-            if (state.sun > 90) skyTop = "#ff9a9e"; // Спека
-            let skyBot = state.water > 70 ? "#a8edea" : "#2a5298";
-            if (state.water > 80) skyBot = "#333"; // Шторм
-
-            let grad = ctx.createLinearGradient(0, 0, 0, height);
-            grad.addColorStop(0, skyTop);
-            grad.addColorStop(1, skyBot);
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, width, height);
-
-            // 2. Сонце / Місяць
-            if (state.sun > 20) {
-                let sunY = height * 0.1 + (100 - state.sun);
-                ctx.beginPath();
-                let sunGrad = ctx.createRadialGradient(width-100, sunY, 10, width-100, sunY, 60);
-                sunGrad.addColorStop(0, "rgba(255, 255, 200, 1)");
-                sunGrad.addColorStop(0.5, "rgba(255, 200, 50, 0.5)");
-                sunGrad.addColorStop(1, "rgba(255, 200, 50, 0)");
-                ctx.fillStyle = sunGrad;
-                ctx.arc(width-100, sunY, 80, 0, Math.PI*2);
-                ctx.fill();
-            }
-
-            // 3. Задні плани (Гори/Пагорби)
-            ctx.fillStyle = "rgba(0,0,0,0.2)";
-            ctx.beginPath();
-            ctx.ellipse(width/2, height*0.75, width*0.8, height*0.2, 0, 0, Math.PI*2);
-            ctx.fill();
-
-            // 4. Земля
-            let groundColor = state.water > 80 ? "#2c3e50" : "#27ae60"; // Темніє від води
-            if (state.sun > 90) groundColor = "#e67e22"; // Сохне від сонця
-            ctx.fillStyle = groundColor;
-            ctx.fillRect(0, height*0.7, width, height*0.3);
-
-            // 5. Об'єкти (Сортуємо по Y для правильного перекриття)
-            state.objects.sort((a,b) => a.y - b.y);
-            state.objects.forEach(o => o.draw());
-
-            // 6. Частинки дощу (Передній план)
-            state.particles.forEach(p => p.draw());
-
-            requestAnimationFrame(draw);
-        }
-
-        // --- GAME FLOW ---
-        function startGame() {
-            AudioFX.init();
-            document.getElementById('start-screen').style.display = 'none';
-            state.playing = true;
-            loadLevel(0);
-            
-            // Запуск циклів
-            setInterval(update, 50); // Logic loop
-            draw(); // Render loop
-        }
-
-        function loadLevel(idx) {
-            state.levelIdx = idx;
-            state.objects = [];
-            state.particles = [];
-            state.sun = 50;
-            state.water = 50;
-            state.cleaned = 0;
-            
-            document.getElementById('lvl-title').innerText = levels[idx].title;
-            document.getElementById('lvl-goal').innerText = levels[idx].desc;
-        }
-
-        function winLevel() {
-            state.playing = false;
-            AudioFX.soundWin();
-            document.getElementById('win-screen').style.display = 'flex';
-        }
-
-        function nextLevel() {
-            let next = state.levelIdx + 1;
-            if (next >= levels.length) {
-                alert("Вітаємо! Ви пройшли гру!");
-                next = 0;
-            }
-            document.getElementById('win-screen').style.display = 'none';
-            state.playing = true;
-            loadLevel(next);
-        }
-        
-        // Спливаючий текст для помилок
-        function showFloatingText(x, y, text) {
-            ctx.save();
-            ctx.font = "20px Montserrat";
-            ctx.fillStyle = "white";
-            ctx.fillText(text, x, y - 50);
-            ctx.restore();
-            // Спрощено для прикладу (в draw loop це було б складніше)
-        }
-
-    </script>
+toMenu();
+</script>
 </body>
 </html>
