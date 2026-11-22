@@ -821,39 +821,51 @@ body::after { display: none; }
   .nav-tab { padding: 8px 12px; font-size: .85rem; }
   .topbar { padding: 0 12px; }
 }
+
+/* без екрана входу — гра відкривається одразу */
+#app { display: block; }
+/* правила місії — внизу, за кнопкою */
+.rules-wrap { margin: 18px 28px 0; }
+.btn-rules, .btn-settings {
+  background: rgba(0, 212, 255, .1); color: var(--power); border: 1px solid var(--power); border-radius: 999px;
+  padding: 10px 18px; font-weight: 800; letter-spacing: .5px; cursor: pointer; font-size: .9rem;
+}
+.btn-rules:hover, .btn-settings:hover { background: rgba(0, 212, 255, .2); box-shadow: 0 0 12px rgba(0, 212, 255, .35); }
+.btn-rules[aria-expanded="true"], .btn-settings[aria-expanded="true"] { background: #00bcd4; color: var(--void); }
+.rules-body { margin-top: 12px; border: 1px dashed rgba(0, 212, 255, .5); border-radius: 12px; background: rgba(0, 0, 0, .25); }
+/* панель налаштувань тренажера */
+.settings-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid rgba(0, 212, 255, .55); border-radius: 15px; padding: 10px 14px;
+}
+.cfg-summary { color: var(--muted); font-size: .9rem; }
+.cfg-summary b { color: var(--power); }
+/* поле відповіді і цифрова клавіатура */
+#answer-section { flex-direction: column; align-items: center; gap: 12px; }
+.ans-field {
+  width: 180px; max-width: 100%; text-align: center; font-size: 1.8rem; font-weight: 800; letter-spacing: 2px;
+  background: rgba(0, 0, 0, .35) !important; color: #e0f7fa !important; border: 1px solid var(--power) !important;
+  border-radius: 12px !important; padding: 8px 12px; outline: none; caret-color: transparent;
+}
+.keypad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 360px; margin: 0 auto 10px; }
+.kp-key {
+  min-height: 52px; border-radius: 50%/42%; border: 1px solid rgba(0, 212, 255, .4); cursor: pointer;
+  background: radial-gradient(circle at 30% 30%, #2b4a6b, #0e2340); color: #e0f7fa; font-size: 1.35rem; font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .35); transition: transform .08s, box-shadow .15s;
+}
+.kp-key:hover { box-shadow: 0 0 12px rgba(0, 212, 255, .45); }
+.kp-key.kp-press, .kp-key:active { transform: scale(.92); background: radial-gradient(circle at 30% 30%, #fff, var(--hero)); color: var(--void); }
+.kp-back { background: rgba(255, 62, 62, .15); color: #ff7a7a; border-color: #ff3e3e; }
+.kp-minus { background: rgba(255, 157, 0, .15); color: var(--hero); border-color: var(--hero); }
+.kp-ok { grid-column: span 3; border-radius: 12px; background: var(--power); color: var(--void); font-size: 1.05rem; letter-spacing: .5px; }
+.keypad:not(.with-minus) .kp-ok { grid-column: span 4; }
+@media (max-width: 480px) { .kp-key { min-height: 48px; font-size: 1.2rem; } .rules-wrap { margin: 16px 14px 0; } }
 </style>
 </head>
 <body>
 
 <div class="bg-bolt" style="top:10%;right:5%;transform:rotate(15deg);">⚡</div>
 <div class="bg-bolt" style="bottom:15%;left:3%;transform:rotate(-10deg);font-size:12rem;">⚡</div>
-
-<!-- ══ LOGIN ══ -->
-<div id="login-screen">
-  <div class="login-wrap">
-    <div class="login-bg-text">HERO</div>
-    <div class="login-card">
-      <div class="hero-badge">
-        <div class="badge-icon">⚡</div>
-        <div class="badge-text">
-          <div class="badge-title">HERO MATH ACADEMY</div>
-          <div class="badge-sub">Школа супергероїв ментальної арифметики</div>
-        </div>
-      </div>
-      <div class="hero-field">
-        <label>Ім'я героя</label>
-        <input type="text" id="inp-name" placeholder="Твоє ім'я" autocomplete="off">
-      </div>
-      <div class="hero-field">
-        <label>Код доступу</label>
-        <input type="password" id="inp-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="btn-enter" onclick="doLogin()">⚡ РОЗПОЧАТИ МІСІЮ</button>
-      <div id="login-error">⚠ НЕВІРНИЙ КОД ДОСТУПУ</div>
-      <p class="login-hint">Код для демо: 1234</p>
-    </div>
-  </div>
-</div>
 
 <!-- ══ APP ══ -->
 <div id="app">
@@ -863,11 +875,6 @@ body::after { display: none; }
     </div>
     <div class="topbar-right">
       <div class="session-timer" id="session-timer">00:00</div>
-      <div class="hero-chip">
-        <div class="hero-avatar" id="user-avatar">H</div>
-        <div class="hero-name" id="user-name-display">HERO</div>
-      </div>
-      <button class="btn-logout" onclick="doLogout()">ВИЙТИ</button>
     </div>
   </nav>
 
@@ -933,8 +940,13 @@ body::after { display: none; }
     <div class="trainer-layout">
       <div style="display:flex;flex-direction:column;gap:16px;">
 
+        <!-- НАЛАШТУВАННЯ: приховані, відкриваються кнопкою -->
+        <div class="settings-bar">
+          <div class="cfg-summary" id="cfg-summary"></div>
+          <button class="btn-settings" type="button" aria-expanded="false" aria-controls="trainer-settings" onclick="toggleSettings(this)">⚙ НАЛАШТУВАННЯ</button>
+        </div>
         <!-- MODE SELECTOR -->
-        <div class="mode-selector">
+        <div class="mode-selector" id="trainer-settings" hidden>
           <div class="mode-label">⚡ РЕЖИМ ТРЕНУВАННЯ</div>
           <div class="mode-grid">
             <div class="mode-btn selected" id="mode-sum" onclick="selectMode('sum')">
@@ -986,8 +998,8 @@ body::after { display: none; }
           <div id="flash-num">⚡</div>
           <div class="flash-sub" id="flash-status">ГОТОВИЙ ГЕРОЮ?</div>
           <div id="answer-section" style="margin-top:20px;">
-            <input type="number" id="ans-inp" placeholder="0" onkeydown="if(event.key==='Enter')doCheck()">
-            <button class="btn-verify" onclick="doCheck()">⚡ ПІДТВЕРДИТИ</button>
+            <input type="text" inputmode="none" autocomplete="off" class="ans-field" id="ans-inp" placeholder="0" onkeydown="if(event.key==='Enter')doCheck()">
+            <div id="trainer-keypad"></div>
           </div>
           <div id="start-section">
             <button class="btn-power-start" onclick="startFlash()">▶ ЗАПУСТИТИ МІСІЮ</button>
@@ -1073,29 +1085,12 @@ function loadCompleted(){return JSON.parse(localStorage.getItem('hma_completed')
 function saveCompleted(a){localStorage.setItem('hma_completed',JSON.stringify(a));}
 function pause(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// ══════════════ LOGIN ══════════════
-function doLogin(){
-  const name=document.getElementById('inp-name').value.trim();
-  const pass=document.getElementById('inp-pass').value;
-  if(!name||pass!=='1234'){
-    const e=document.getElementById('login-error');
-    e.style.display='block'; setTimeout(()=>e.style.display='none',2500); return;
-  }
-  currentUser=name;
-  document.getElementById('login-screen').style.display='none';
+// ══════════════ СТАРТ (без реєстрації: гра відкривається одразу) ══════════════
+function mountTrainerKeypad(){ document.getElementById('trainer-keypad').innerHTML=keypadHtml('ans-inp','doCheck()',true); }
+function startApp(){
+  mountTrainerKeypad();
   document.getElementById('app').style.display='block';
-  document.getElementById('user-name-display').textContent=name.toUpperCase();
-  document.getElementById('user-avatar').textContent=name[0].toUpperCase();
-  startSessionTimer(); renderLessons(); updateDashboard(); updateTrainerStats();
-}
-function doLogout(){
-  if(!confirm('Завершити місію?')) return;
-  clearInterval(sessionTimer); sessionSeconds=0; currentUser=null;
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('inp-name').value='';
-  document.getElementById('inp-pass').value='';
-  document.getElementById('session-timer').textContent='00:00';
+  startSessionTimer(); renderLessons(); updateDashboard(); updateTrainerStats(); updateCfgSummary();
 }
 function startSessionTimer(){
   sessionSeconds=0; clearInterval(sessionTimer);
@@ -1106,7 +1101,6 @@ function startSessionTimer(){
     document.getElementById('session-timer').textContent=m+':'+s;
   },1000);
 }
-document.getElementById('inp-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 // ══════════════ TABS ══════════════
 function showTab(name,btn){
@@ -1144,11 +1138,6 @@ function loadLesson(id){
   currentLessonId=id;
   const lesson=LESSONS.find(l=>l.id===id);
   const c=loadCompleted(),isDone=c.includes(id);
-  const videoHtml=lesson.video
-    ?`<div class="video-slot"><iframe src="${lesson.video}" frameborder="0" allowfullscreen></iframe></div>`
-    :`<div class="video-slot" style="margin:0 28px 22px;">
-        <div class="video-placeholder"><span class="vi">▶</span>ВІДЕО БУДЕ ДОДАНО</div>
-      </div>`;
   const next=LESSONS.find(l=>l.id===id+1);
   const prHtml=buildPracticeHtml(id,lesson.practice);
   document.getElementById('lesson-content-area').innerHTML=`
@@ -1156,9 +1145,11 @@ function loadLesson(id){
       <div class="lesson-num-tag">МІСІЯ ${id} / ${LESSONS.length}</div>
       <div class="lesson-main-title">${lesson.title}</div>
     </div>
-    ${videoHtml}
-    <div class="lesson-body">${lesson.text.replace(/\n/g,'<br>')}</div>
     ${prHtml}
+    <div class="rules-wrap">
+      <button class="btn-rules" type="button" aria-expanded="false" aria-controls="rules-${id}" onclick="toggleRules(this)">📜 ПРАВИЛА МІСІЇ</button>
+      <div class="lesson-body rules-body" id="rules-${id}" hidden>${lesson.text.replace(/\n/g,'<br>')}</div>
+    </div>
     <div class="lesson-footer">
       <button class="btn-mission-done ${isDone?'done':''}" onclick="markDone(${id})">
         ${isDone?'⚡ МІСІЮ ВИКОНАНО':'⚡ ВИКОНАТИ МІСІЮ'}
@@ -1170,11 +1161,42 @@ function loadLesson(id){
   renderLessons();
 }
 
+function toggleRules(btn){
+  const box=document.getElementById(btn.getAttribute('aria-controls'));
+  const open=box.hidden; box.hidden=!open;
+  btn.setAttribute('aria-expanded',String(open));
+  btn.textContent=open?'✕ СХОВАТИ ПРАВИЛА':'📜 ПРАВИЛА МІСІЇ';
+  if(open) box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
 function markDone(id){
   const c=loadCompleted();
   if(!c.includes(id)){c.push(id);saveCompleted(c);}
   loadLesson(id); updateDashboard();
 }
+
+// ══════════════ ЦИФРОВА КЛАВІАТУРА 1 2 3 4 5 6 7 8 9 0 ══════════════
+const KP_ACTIONS={};
+function keypadHtml(target,okAction,allowMinus){
+  KP_ACTIONS[target]=okAction;
+  const k=(v,cls,label)=>`<button type="button" class="kp-key ${cls||''}" data-target="${target}" data-key="${v}" aria-label="${label||v}">${label||v}</button>`;
+  return `<div class="keypad${allowMinus?' with-minus':''}" role="group" aria-label="Цифри для відповіді">
+    ${['1','2','3','4','5','6','7','8','9','0'].map(d=>k(d)).join('')}
+    ${allowMinus?k('-','kp-minus','−'):''}
+    ${k('back','kp-back','⌫')}
+    ${k('ok','kp-ok','✓ ГОТОВО')}
+  </div>`;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.kp-key'); if(!b) return;
+  const t=b.dataset.target, inp=document.getElementById(t); if(!inp) return;
+  const key=b.dataset.key;
+  b.classList.add('kp-press'); setTimeout(()=>b.classList.remove('kp-press'),120);
+  if(key==='ok'){ const a=KP_ACTIONS[t]; if(a==='doCheck()') doCheck(); else { const m=a.match(/checkFlashMini\((\d+)\)/); if(m) checkFlashMini(+m[1]); } return; }
+  if(key==='back'){ inp.value=inp.value.slice(0,-1); }
+  else if(key==='-'){ inp.value=inp.value.startsWith('-')?inp.value.slice(1):'-'+inp.value; }
+  else if(inp.value.replace('-','').length<7){ inp.value=(inp.value==='0'?'':inp.value)+key; }
+});
 
 // ══════════════ PRACTICE HTML ══════════════
 function buildPracticeHtml(pid,pr){
@@ -1188,11 +1210,10 @@ function buildPracticeHtml(pid,pr){
         <div class="task-display" id="pr-flash-${pid}">—</div>
         <div class="task-hint" id="pr-hint-${pid}">${pr.description}</div>
         <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:12px;">
-          <input type="number" id="pr-flash-ans-${pid}" placeholder="?"
-            style="background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.3);border-bottom:2px solid var(--power);color:var(--power);padding:10px 14px;font-family:'Orbitron',monospace;font-size:1.1rem;text-align:center;width:130px;outline:none;"
+          <input type="text" inputmode="none" autocomplete="off" class="ans-field" id="pr-flash-ans-${pid}" placeholder="?"
             onkeydown="if(event.key==='Enter')checkFlashMini(${pid})">
-          <button class="btn-pr btn-pr-check" style="flex:0 0 auto;" onclick="checkFlashMini(${pid})">OK</button>
         </div>
+        ${keypadHtml('pr-flash-ans-'+pid,'checkFlashMini('+pid+')',false)}
         <div class="practice-controls">
           <button class="btn-pr btn-pr-start" onclick="startFlashMini(${pid})">▶ ЗАПУСТИТИ</button>
           <button class="btn-pr btn-pr-reset" onclick="resetFlashMini(${pid})">↺ СКИНУТИ</button>
@@ -1366,8 +1387,23 @@ const MODE_LABELS={
   'mixed-digits':'ЗМІШАНІ РОЗРЯДИ',
   'chaos':'ХАОС ⚡'
 };
+function toggleSettings(btn){
+  const box=document.getElementById('trainer-settings');
+  const open=box.hidden; box.hidden=!open;
+  btn.setAttribute('aria-expanded',String(open));
+  btn.textContent=open?'✓ ГОТОВО':'⚙ НАЛАШТУВАННЯ';
+  updateCfgSummary();
+}
+function updateCfgSummary(){
+  const el=document.getElementById('cfg-summary'); if(!el) return;
+  const n=document.getElementById('cfg-count').value, sp=document.getElementById('cfg-speed').value;
+  const d=document.getElementById('cfg-digits');
+  const k=+n, w=(k%10===1&&k%100!==11)?'число':(k%10>=2&&k%10<=4&&(k%100<12||k%100>14))?'числа':'чисел';
+  el.innerHTML=`<b>${MODE_LABELS[selectedMode]}</b> · ${n} ${w} · ${sp} мс · ${d.options[d.selectedIndex].text}`;
+}
+['cfg-count','cfg-speed','cfg-digits'].forEach(id=>document.getElementById(id).addEventListener('input',updateCfgSummary));
 function selectMode(mode){
-  selectedMode=mode;
+  selectedMode=mode; setTimeout(updateCfgSummary);
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('mode-'+mode).classList.add('selected');
   document.getElementById('arena-mode-badge').textContent=MODE_LABELS[mode];
@@ -1420,6 +1456,7 @@ async function startFlash(){
 
   document.getElementById('start-section').style.display='none';
   document.getElementById('answer-section').style.display='none';
+  if(!document.getElementById('trainer-settings').hidden) toggleSettings(document.querySelector('.btn-settings'));
   document.getElementById('level-up-toast').style.display='none';
 
   trainerState.sum=0;
@@ -1481,7 +1518,7 @@ function doCheck(){
     if(records.bestSpeed===null||currentSpeed<records.bestSpeed) records.bestSpeed=currentSpeed;
     if(trainerState.streak%5===0){
       const ns=Math.max(100,Math.round(currentSpeed*.9));
-      document.getElementById('cfg-speed').value=ns;
+      document.getElementById('cfg-speed').value=ns; updateCfgSummary();
       const t=document.getElementById('level-up-toast');
       t.style.display='block'; setTimeout(()=>t.style.display='none',2200);
     }
@@ -1525,6 +1562,7 @@ function resetStats(){
   trainerState={sum:0,streak:0};
   updateTrainerStats(); updateDashboard();
 }
+startApp();
 </script>
 </body>
 </html>
