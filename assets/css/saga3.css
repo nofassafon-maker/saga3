@@ -182,11 +182,11 @@ a.card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(103, 70
 
   .portal { min-height: 0; }
   .portal-inner { padding-top: 22px; padding-bottom: 84px; }
-  .spot { padding: 4px; top: auto !important; bottom: 14px; transform: translateX(-50%); }
-  .spot:hover, .spot:focus-visible { transform: translateX(-50%) scale(1.08); }
-  .spot-t { display: none; }
-  .spot:nth-of-type(1) { left: 20% !important; } .spot:nth-of-type(2) { left: 40% !important; }
-  .spot:nth-of-type(3) { left: 60% !important; } .spot:nth-of-type(4) { left: 80% !important; }
+  .portal .spot { padding: 4px; top: auto !important; bottom: 14px; transform: translateX(-50%); }
+  .portal .spot:hover, .portal .spot:focus-visible { transform: translateX(-50%) scale(1.08); }
+  .portal .spot-t { display: none; }
+  .portal .spot:nth-of-type(1) { left: 20% !important; } .portal .spot:nth-of-type(2) { left: 40% !important; }
+  .portal .spot:nth-of-type(3) { left: 60% !important; } .portal .spot:nth-of-type(4) { left: 80% !important; }
   .month { grid-template-columns: 1fr; }
   .month img { min-height: 0; aspect-ratio: 4 / 3; }
   .mini-map .btn { font-size: .9rem; padding: 10px 16px; bottom: 10px; }
@@ -512,3 +512,35 @@ body.reader.focus .progress { background: #3a2f55; }
 .st-text { flex: 1; min-width: 220px; }
 .st-text .collect-progress { margin: 8px 0 6px; }
 .st-break { font-size: .9rem; color: var(--muted); }
+
+/* ---------- карта світу: ілюстрація з назвами місць ---------- */
+.map-wrap { padding: 0; overflow: hidden; border-radius: var(--radius); background: #cfe8f0; }
+svg.map { display: block; width: 100%; height: auto; }
+/* назви вже намальовані на карті — свою підпис показуємо лише для вибраного місця */
+.pin .lbl { display: none; }
+.pin.on .lbl { display: block; }
+.pin .dot { r: 17; fill: rgba(255, 255, 255, .92); stroke: var(--magic); stroke-width: 3; }
+.pin .halo { r: 26; }
+.pin .ico { font-size: 18px; transform: translateY(-3px); }
+.pin:hover .dot, .pin:focus-visible .dot { fill: #fff; }
+@media (max-width: 900px) {
+  .pin .dot { r: 22; }
+  .pin .halo { r: 32; }
+  .pin .ico { font-size: 24px; transform: translateY(-1px); }
+}
+/* назва вибраного місця біля краю карти — на будь-якій ширині */
+.pin.edge-l .lbl { text-anchor: start; transform: translateX(-24px); }
+.pin.edge-r .lbl { text-anchor: end; transform: translateX(24px); }
+@media (max-width: 900px) {
+  .pin.edge-l .lbl { transform: translateX(-34px); }
+  .pin.edge-r .lbl { transform: translateX(34px); }
+}
+
+/* ---------- школа: ілюстрація з місцями ---------- */
+.school-hero { position: relative; margin: 0 0 22px; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); background: #e8e0f3; }
+.school-hero img { display: block; width: 100%; height: auto; }
+.school-hero .spot { font-size: .82rem; }
+@media (max-width: 760px) {
+  .school-hero .spot-t { display: none; }
+  .school-hero .spot { padding: 4px; }
+}

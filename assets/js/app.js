@@ -456,8 +456,7 @@
           <h2>Досліджуй СилаВолію</h2>
           <p class="lead">${esc(C.world.description)}</p>
           <a class="mini-map" href="world.html" aria-label="Відкрити карту світу">
-            <svg viewBox="0 0 1000 700" aria-hidden="true">${MAP_TERRAIN.replace(/ filter="url\(#mSoft\)"/g, "")}
-              ${C.locations.filter((l) => l.map).map((l) => `<g transform="translate(${l.map.x} ${l.map.y})"><circle r="24" fill="#fff" stroke="#6746A1" stroke-width="3"/><text y="9" text-anchor="middle" font-size="26">${l.map.icon}</text></g>`).join("")}
+            <svg viewBox="0 0 ${MAP_W} ${MAP_H}" aria-hidden="true">${MAP_TERRAIN}
             </svg>
             <span class="btn">Відкрити карту — ${C.locations.length} чарівних місць →</span>
           </a>
@@ -582,50 +581,9 @@
   };
 
   /* ---------- карта світу ---------- */
-  const MAP_TERRAIN = `
-    <defs>
-      <radialGradient id="mSea" cx="80%" cy="70%" r="60%"><stop offset="0" stop-color="#bfe6f7"/><stop offset="1" stop-color="#8fcdea"/></radialGradient>
-      <linearGradient id="mCheese" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe082"/><stop offset="1" stop-color="#f5b942"/></linearGradient>
-      <filter id="mSoft"><feGaussianBlur stdDeviation="6"/></filter>
-      <pattern id="mDots" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.2" fill="#d9c49a" opacity=".45"/></pattern>
-    </defs>
-    <rect width="1000" height="700" rx="28" fill="#fbf1dc"/>
-    <rect width="1000" height="700" rx="28" fill="url(#mDots)"/>
-    <!-- море і острови -->
-    <path d="M1000 210 C 930 230 900 290 905 340 C 912 410 860 450 830 500 C 800 545 790 600 760 640 C 740 668 735 690 730 700 L 972 700 Q 1000 700 1000 672 Z" fill="url(#mSea)"/>
-    <path d="M905 340 C 912 410 860 450 830 500 C 800 545 790 600 760 640" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="2 14" stroke-linecap="round" opacity=".8"/>
-    <g fill="#e9d6ae" stroke="#cdb37f" stroke-width="2"><ellipse cx="905" cy="612" rx="44" ry="20"/><ellipse cx="955" cy="560" rx="22" ry="11"/><ellipse cx="860" cy="660" rx="26" ry="12"/></g>
-    <g fill="#fff" opacity=".55" filter="url(#mSoft)"><ellipse cx="930" cy="590" rx="70" ry="22"/><ellipse cx="880" cy="640" rx="60" ry="18"/></g>
-    <!-- пустеля -->
-    <path d="M0 28 Q0 0 28 0 L250 0 C 240 60 230 120 180 175 C 130 225 60 215 0 230 Z" fill="#f6dca4"/>
-    <g fill="none" stroke="#e6bf73" stroke-width="3" stroke-linecap="round"><path d="M30 70 q25 -14 50 0 t50 0"/><path d="M90 150 q25 -14 50 0 t50 0"/><path d="M20 190 q20 -10 40 0"/></g>
-    <!-- пагорби -->
-    <g fill="#d8efb8"><ellipse cx="560" cy="300" rx="230" ry="130"/><ellipse cx="420" cy="470" rx="250" ry="120"/><ellipse cx="640" cy="560" rx="200" ry="110"/><ellipse cx="300" cy="610" rx="220" ry="90"/></g>
-    <g fill="#c6e5a0" opacity=".8"><ellipse cx="700" cy="420" rx="120" ry="60"/><ellipse cx="300" cy="420" rx="110" ry="50"/></g>
-    <!-- Неонова Долина -->
-    <ellipse cx="660" cy="625" rx="95" ry="42" fill="#e7d4ff" opacity=".9"/>
-    <!-- Країна Срібних Сльозинок -->
-    <ellipse cx="135" cy="470" rx="115" ry="80" fill="#e5f2fb"/><g fill="#fff">${[[100, 440], [160, 500], [70, 500], [180, 440]].map(([x, y]) => `<path d="M${x} ${y - 8} L${x + 2} ${y - 2} L${x + 8} ${y} L${x + 2} ${y + 2} L${x} ${y + 8} L${x - 2} ${y + 2} L${x - 8} ${y} L${x - 2} ${y - 2} Z"/>`).join("")}</g>
-    <!-- Ліс Шепотів -->
-    <g>${[[170, 270], [205, 240], [245, 265], [290, 290], [215, 300], [260, 345], [180, 330], [310, 340], [140, 215], [230, 205], [120, 290], [285, 240]].map(([x, y], k) =>
-      `<circle cx="${x}" cy="${y}" r="${24 + (k % 3) * 4}" fill="${k % 2 ? "#7cc27a" : "#5fae6a"}"/><rect x="${x - 3}" y="${y + 18}" width="6" height="12" rx="2" fill="#8a6a45"/>`).join("")}</g>
-    <!-- Сирні гори -->
-    <g stroke="#d99a2b" stroke-width="3" stroke-linejoin="round">
-      <path d="M320 225 L390 85 L455 225 Z" fill="url(#mCheese)"/><path d="M400 225 L470 60 L545 225 Z" fill="url(#mCheese)"/><path d="M490 225 L545 120 L600 225 Z" fill="url(#mCheese)"/>
-    </g>
-    <g fill="#f0a830" opacity=".75"><circle cx="380" cy="180" r="9"/><circle cx="470" cy="130" r="8"/><circle cx="490" cy="190" r="11"/><circle cx="548" cy="185" r="7"/><circle cx="420" cy="205" r="6"/></g>
-    <!-- Небесні Хмари -->
-    <g fill="#fff" stroke="#e3ecf5" stroke-width="2">
-      <path d="M770 105 a28 28 0 0 1 40 -30 a34 34 0 0 1 62 6 a26 26 0 0 1 22 44 h-112 a22 22 0 0 1 -12 -20 Z"/>
-      <path d="M880 170 a18 18 0 0 1 26 -18 a22 22 0 0 1 40 4 a16 16 0 0 1 14 28 h-72 a14 14 0 0 1 -8 -14 Z" opacity=".9"/>
-    </g>
-    <!-- Лимонадна річка -->
-    <path d="M470 228 C 480 290 540 300 560 360 C 585 430 560 470 620 515 C 680 560 740 560 790 600" fill="none" stroke="#fff3a6" stroke-width="16" stroke-linecap="round"/>
-    <path d="M470 228 C 480 290 540 300 560 360 C 585 430 560 470 620 515 C 680 560 740 560 790 600" fill="none" stroke="#ffe066" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 16"/>
-    <!-- Дзеркальне Озеро -->
-    <ellipse cx="720" cy="472" rx="52" ry="26" fill="#dfe8f3" stroke="#a9b8cc" stroke-width="3"/><ellipse cx="708" cy="466" rx="18" ry="5" fill="#fff" opacity=".8"/>
-    <!-- троянда вітрів -->
-    <g transform="translate(962 60) scale(.8)" fill="#c9a86a"><path d="M0 -34 L7 0 L0 34 L-7 0 Z"/><path d="M-34 0 L0 -7 L34 0 L0 7 Z" opacity=".6"/><text y="-40" text-anchor="middle" font-size="15" font-weight="800" fill="#a0824c">Пн</text></g>`;
+  /* карта світу: ілюстрація (assets/img/world-map.jpg, 2000×1116) з назвами місць; мітки — поверх */
+  const MAP_W = 1000, MAP_H = 558;
+  const MAP_TERRAIN = `<image href="assets/img/world-map.jpg" x="0" y="0" width="${MAP_W}" height="${MAP_H}" preserveAspectRatio="xMidYMid slice"/>`;
 
   /* ---------- сцени локацій ---------- */
   const SCENE_GUIDES = {
@@ -667,14 +625,14 @@
         </div>
         <div class="map-layout">
           <figure class="map-wrap">
-            <svg class="map" viewBox="0 0 1000 700" role="group" aria-label="Карта СилаВолії">
+            <svg class="map" viewBox="0 0 ${MAP_W} ${MAP_H}" role="group" aria-label="Карта СилаВолії">
               ${MAP_TERRAIN}
               <g id="pins">${LOCS.map((l) => `
                 <g class="pin${l.map.x < 230 ? " edge-l" : l.map.x > 770 ? " edge-r" : ""}" data-id="${l.id}" transform="translate(${l.map.x} ${l.map.y})" tabindex="0" role="button" aria-label="${esc(l.name)}">
                   <circle class="halo" r="34"/><circle class="dot" r="25"/>
                   <text class="ico" y="9" text-anchor="middle">${l.map.icon}</text>
                   <g class="stamp-badge"><circle cx="20" cy="-20" r="11"/><text x="20" y="-15" text-anchor="middle">✓</text></g>
-                  <text class="lbl" y="${l.map.y > 640 ? -38 : 46}" text-anchor="middle">${esc(l.name)}</text>
+                  <text class="lbl" y="${l.map.y > 440 ? -30 : 40}" text-anchor="middle">${esc(l.name)}</text>
                 </g>`).join("")}</g>
             </svg>
           </figure>
@@ -968,11 +926,24 @@
     save(); render();
   };
 
+  /* місця школи на ілюстрації → уроки, що там відбуваються */
+  const SCHOOL_SPOTS = [
+    { x: 13, y: 30, icon: "📚", t: "Бібліотека з літаючими книгами", lesson: "riddles" },
+    { x: 24, y: 40, icon: "🌿", t: "Похмура Оранжерея", lesson: "faith" },
+    { x: 50, y: 14, icon: "🔔", t: "Вежа з Дзвоном-Всезнайком", lesson: "potion" },
+    { x: 71, y: 44, icon: "💎", t: "Зала з Магічним Кристалом", lesson: "exam" },
+  ];
   pages.school = function (main) {
     const sch = byId(C.locations, "school");
     const list = D.stories.filter((s) => s.location === "school");
     main.innerHTML = `
-      <section class="section wrap"><h1>Школа «ШляхдоМрій»</h1><p class="lead">${esc(sch.desc)}.</p>
+      <section class="section wrap">
+        <figure class="school-hero">
+          <img src="assets/img/school-s.jpg" srcset="assets/img/school-s.jpg 800w, assets/img/school.jpg 1600w" sizes="(max-width: 1120px) 100vw, 1088px"
+            alt="Школа «ШляхдоМрій»: вежа-бібліотека з літаючими книгами, оранжерея, водоспад, вежа з дзвоном, зала з Магічним Кристалом; біля веселкової брами — Фін, Краш і Луна" width="1600" height="893">
+          ${SCHOOL_SPOTS.map((p) => `<a class="spot" href="lesson.html?id=${p.lesson}" style="left:${p.x}%;top:${p.y}%"><span class="spot-ico">${p.icon}</span><span class="spot-t">${esc(p.t)}</span></a>`).join("")}
+        </figure>
+        <h1>Школа «ШляхдоМрій»</h1><p class="lead">${esc(sch.desc)}.</p>
         <p><b>У школі є:</b> ${esc(sch.places.join(", "))}.</p></section>
       <section class="section wrap" id="lessons"></section>
       <section class="section wrap"><h2>Шкільні історії</h2><div class="grid">${list.map(storyCard).join("")}</div></section>
