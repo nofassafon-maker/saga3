@@ -90,14 +90,14 @@
     let here = location.pathname.split("/").pop() || "index.html";
     if (here === "lesson.html") here = "school.html";        // урок — частина Школи
     const cur = (h) => (h === here ? ' aria-current="page"' : "");
-    const n = progress().total;
+    const pr = progress(), n = pr.total, nMax = pr.totalMax;
     const top = document.createElement("header");
     top.className = "top";
     top.innerHTML = `<div class="wrap">
       <a class="brand" href="index.html"><img src="assets/img/logo.png" alt=""><span>${esc(C.world.name)}</span></a>
-      <nav class="nav" aria-label="Розділи">${NAV.map(([h, t]) => `<a href="${h}"${cur(h)}>${t}${h === "treasures.html" ? ` <small class="sc">⭐<span data-sc>${n}</span></small>` : ""}</a>`).join("")}</nav>
+      <nav class="nav" aria-label="Розділи">${NAV.map(([h, t]) => `<a href="${h}"${cur(h)}>${t}${h === "treasures.html" ? ` <small class="sc" title="Зібрано ${n} з ${nMax} зірок">⭐<span data-sc>${n}</span>/${nMax}</small>` : ""}</a>`).join("")}</nav>
       <div class="top-mini">
-        <a href="treasures.html" aria-label="Мої скарби: зірок ${n}"${cur("treasures.html")}>⭐ <small data-sc>${n}</small></a>
+        <a href="treasures.html" aria-label="Мої скарби: зібрано зірок ${n} з ${nMax}"${cur("treasures.html")}>⭐ <small><span data-sc>${n}</span>/${nMax}</small></a>
         ${D.shop ? `<a href="shop.html" aria-label="Крамниця"${cur("shop.html")}>🛒</a>` : ""}
       </div>
     </div>`;
@@ -119,7 +119,7 @@
       msg: "У СилаВолії є правило: навіть найменший добрий вчинок здатний освітити цілий світ.", hint: "Головна — придивись до нічного неба" },
     { id: "smoke", page: "heroes", where: "main .section", x: "92%", y: "18px", icon: "🌈", name: "Веселковий Дим Фіна",
       msg: "Фін видихає не вогонь, а веселковий дим — і будь-який сум розвіюється.", hint: "Герої — поруч із заголовком" },
-    { id: "nanoput", page: "world", where: ".map-wrap", x: "56%", y: "6%", icon: "☁️", name: "Сіра хмаринка НаноПута",
+    { id: "nanoput", page: "world", where: ".map-wrap", x: "29%", y: "2%", icon: "☁️", name: "Сіра хмаринка НаноПута",
       msg: "НаноПут ховається в сірих хмаринках і змінює форму. Але веселка дружби завжди сильніша!", hint: "Світ — десь у небі над картою" },
     { id: "key", page: "world", where: "main .section:last-of-type", x: "96%", y: "22px", icon: "🗝️", name: "Ключ Відчуттів",
       msg: "Кришталевий ключ змінює форму від щирих почуттів. Відчини ним серце — і знайдеш друга.", hint: "Світ — біля чарівних артефактів" },
@@ -178,13 +178,14 @@
     const order = ORDER();
     const p = {
       read: order.filter((s) => read[s.id]).length, readMax: order.length,
-      quiz: order.filter((s) => quiz[s.id]).length,
+      quiz: order.filter((s) => quiz[s.id]).length, quizMax: order.filter((s) => s.lesson).length,   // завдання є в казці з мораллю
       stamps: LOCS_ON_MAP().filter((l) => stamps[l.id]).length, stampsMax: LOCS_ON_MAP().length,
       lessons: LESSON_IDS.filter((id) => stars[id]).length, lessonsMax: LESSON_IDS.length,
       secrets: SECRETS.filter((s) => secrets[s.id]).length, secretsMax: SECRETS.length,
       readSet: read,
     };
     p.total = p.read + p.quiz + p.stamps + p.lessons + p.secrets;
+    p.totalMax = p.readMax + p.quizMax + p.stampsMax + p.lessonsMax + p.secretsMax;   // скільки зірок можна зібрати
     return p;
   }
   /* хто/що з'являється в казці → відкривається, щойно казку прочитано */
@@ -261,11 +262,14 @@
         <section class="section wrap"><p class="kicker">Скарби</p><h1>Мої скарби</h1>
           <p class="lead">Тут збирається все, що ти здобуваєш у СилаВолії: зірки, значки, картки героїв і друзів, артефакти та секрети. Усе зберігається лише в цьому браузері — без реєстрації.</p>
           <div class="star-total card"><div class="body">
-            <div class="st-big">⭐ ${p.total}</div><div><b>Зірки СилаВолії</b><p>Кожна прочитана казка, виконане завдання, печатка місця, урок і знахідка дають зірку.</p></div>
+            <div class="st-big">⭐ ${p.total}<small> / ${p.totalMax}</small></div><div class="st-text"><b>Зірки СилаВолії: зібрано ${p.total} з ${p.totalMax}</b>
+              <p>Кожна прочитана казка, виконане завдання, печатка місця, урок і знахідка дають зірку.</p>
+              <div class="collect-progress" role="img" aria-label="Зібрано ${p.total} з ${p.totalMax} зірок"><i style="width:${p.totalMax ? p.total / p.totalMax * 100 : 0}%"></i></div>
+              <p class="st-break">📜 ${p.readMax} казок · 🦉 ${p.quizMax} завдань · 🧭 ${p.stampsMax} печаток · 🎓 ${p.lessonsMax} уроків · ✨ ${p.secretsMax} секретів</p></div>
           </div></div>
           <div class="grid stat-grid">
             <a class="card stat" href="library.html"><div class="body"><span>📜</span><b>${p.read} / ${p.readMax}</b><small>казок прочитано</small>${bar(p.read, p.readMax)}</div></a>
-            <a class="card stat" href="library.html"><div class="body"><span>🦉</span><b>${p.quiz}</b><small>завдань після казок</small></div></a>
+            <a class="card stat" href="library.html"><div class="body"><span>🦉</span><b>${p.quiz} / ${p.quizMax}</b><small>завдань після казок</small>${bar(p.quiz, p.quizMax)}</div></a>
             <a class="card stat" href="world.html"><div class="body"><span>🧭</span><b>${p.stamps} / ${p.stampsMax}</b><small>печаток місць</small>${bar(p.stamps, p.stampsMax)}</div></a>
             <a class="card stat" href="school.html#lessons"><div class="body"><span>🎓</span><b>${p.lessons} / ${p.lessonsMax}</b><small>уроків пройдено</small>${bar(p.lessons, p.lessonsMax)}</div></a>
             <a class="card stat" href="#secrets"><div class="body"><span>✨</span><b>${p.secrets} / ${p.secretsMax}</b><small>секретів знайдено</small>${bar(p.secrets, p.secretsMax)}</div></a>
@@ -666,7 +670,7 @@
             <svg class="map" viewBox="0 0 1000 700" role="group" aria-label="Карта СилаВолії">
               ${MAP_TERRAIN}
               <g id="pins">${LOCS.map((l) => `
-                <g class="pin" data-id="${l.id}" transform="translate(${l.map.x} ${l.map.y})" tabindex="0" role="button" aria-label="${esc(l.name)}">
+                <g class="pin${l.map.x < 230 ? " edge-l" : l.map.x > 770 ? " edge-r" : ""}" data-id="${l.id}" transform="translate(${l.map.x} ${l.map.y})" tabindex="0" role="button" aria-label="${esc(l.name)}">
                   <circle class="halo" r="34"/><circle class="dot" r="25"/>
                   <text class="ico" y="9" text-anchor="middle">${l.map.icon}</text>
                   <g class="stamp-badge"><circle cx="20" cy="-20" r="11"/><text x="20" y="-15" text-anchor="middle">✓</text></g>
@@ -719,7 +723,7 @@
       const guide = C.heroes[hashNum(l.id) % C.heroes.length];
       const art = sceneArt(l);
       const h = hashNum(l.id + "spark");
-      const sx = 12 + (h % 76), sy = 14 + ((h >> 8) % 52);   // місце іскорки на ілюстрації, %
+      const sx = 12 + (h % 76), sy = 16 + ((h >>> 8) % 36);   // >>> — без знака, інакше позиція бувала від’ємною (іскорка за межами ілюстрації)
       const got = !!stamps()[l.id];
       const firstRead = ss.find(readable);
 

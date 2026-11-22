@@ -502,3 +502,13 @@ body.reader.focus .progress { background: #3a2f55; }
 .friend-card.locked .art-lock { top: 50%; }
 @media (prefers-reduced-motion: reduce) { .fr-pic img { transition: none; } }
 .friend-card.locked:hover .fr-pose { opacity: 1; }
+
+/* мітки біля країв карти: на телефоні назва вибраного місця не виходить за межі */
+@media (max-width: 900px) {
+  .pin.edge-l .lbl { text-anchor: start; transform: translateX(-34px); }
+  .pin.edge-r .lbl { text-anchor: end; transform: translateX(34px); }
+}
+.st-big small { font-size: .45em; font-weight: 800; color: var(--muted); }
+.st-text { flex: 1; min-width: 220px; }
+.st-text .collect-progress { margin: 8px 0 6px; }
+.st-break { font-size: .9rem; color: var(--muted); }
