@@ -618,12 +618,12 @@
     let current = null;
 
     main.innerHTML = `
-      <section class="section wrap" id="mapView"><h1>Карта СилаВолії</h1>
+      <section class="section" id="mapView"><div class="wrap"><h1>Карта СилаВолії</h1>
         <p class="lead">Натисни на місце на карті — і ти потрапиш усередину. У кожному місці захована печатка дослідника.</p>
         <div class="filters" role="group" aria-label="Показати місця серії">
           <button data-f="all">Усі місця</button>${D.series.map((s) => `<button data-f="${s.id}">${esc(s.name)}</button>`).join("")}
-        </div>
-        <div class="map-layout">
+        </div></div>
+        <div class="map-layout map-full">
           <figure class="map-wrap">
             <svg class="map" viewBox="0 0 ${MAP_W} ${MAP_H}" role="group" aria-label="Карта СилаВолії">
               ${MAP_TERRAIN}
@@ -636,13 +636,16 @@
                 </g>`).join("")}</g>
             </svg>
           </figure>
-          <aside class="map-panel card" id="panel" aria-live="polite"></aside>
+          <p class="map-pan-hint">👆 Гортай карту пальцем вліво-вправо</p>
         </div>
+        <div class="wrap"><aside class="map-panel card" id="panel" aria-live="polite"></aside></div>
       </section>
       <section class="scene-view" id="scene" hidden></section>
       <section class="section wrap" id="artifacts"><h2>Чарівні артефакти</h2><div class="grid art-grid">${C.artifacts.map((a) => artCard(a, `<div class="chips">${a.stories.map(storyLink).join("")}</div>`)).join("")}</div></section>`;
 
     const panel = $("#panel", main), scene = $("#scene", main), mapView = $("#mapView", main);
+    // на телефоні карта ширша за екран: починаємо з центру
+    requestAnimationFrame(() => { const w = $(".map-full .map-wrap", main); if (w && w.scrollWidth > w.clientWidth) w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2; });
 
     function markStamps() {
       const st = stamps();

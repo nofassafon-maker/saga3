@@ -548,3 +548,16 @@ svg.map { display: block; width: 100%; height: auto; }
 /* картка гри з картинкою (Hero Math Academy) */
 .cover.game-pic { display: block; background: #0b1a31; overflow: hidden; }
 .cover.game-pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* карта світу — на всю ширину вікна, панель під нею */
+.map-layout.map-full { display: block; padding: 0 12px; }
+.map-full .map-wrap { max-width: 2000px; margin: 0 auto; }
+#mapView .map-panel { position: static; max-height: none; margin-top: 18px; scroll-margin-top: 120px; }
+@media (max-width: 640px) {
+  .map-layout.map-full { padding: 0 6px; }
+  /* на телефоні карта вдвічі ширша за екран — гортай пальцем */
+  .map-full .map-wrap { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+  .map-full svg.map { width: 200%; max-width: none; }
+  .map-full .map-pan-hint { display: block; }
+}
+.map-pan-hint { display: none; text-align: center; font-size: .85rem; color: var(--muted); margin: 6px 0 0; }
