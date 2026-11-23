@@ -561,3 +561,27 @@ svg.map { display: block; width: 100%; height: auto; }
   .map-full .map-pan-hint { display: block; }
 }
 .map-pan-hint { display: none; text-align: center; font-size: .85rem; color: var(--muted); margin: 6px 0 0; }
+
+/* чарівний кристал-ромб у рамці карти: нагорода за всі печатки — карта оживає */
+.map-gem { cursor: pointer; outline: none; }
+.map-gem .gem-hit { fill: transparent; }
+.map-gem .gem-glow { fill: #fff6c2; opacity: 0; }
+.map-gem .gem-shape { fill: rgba(255, 255, 255, .25); stroke: #b98cd8; stroke-width: 1.5; }
+.map-gem:hover .gem-glow, .map-gem:focus-visible .gem-glow { opacity: .35; }
+.map-gem.ready .gem-shape { fill: #ffe066; stroke: #fff; stroke-width: 2; }
+.map-gem.ready .gem-glow { animation: gem-pulse 1.4s ease-in-out infinite; }
+.map-gem.alive .gem-shape { fill: #a29bfe; }
+@keyframes gem-pulse { 0%, 100% { opacity: .15; } 50% { opacity: .85; } }
+svg.map.alive { box-shadow: 0 0 0 4px #ffe066, 0 0 40px rgba(255, 224, 102, .6); }
+@media (prefers-reduced-motion: reduce) { .map-gem.ready .gem-glow { animation: none; opacity: .6; } }
+
+/* зірочка на воротах школи: нагорода за серію B — школа оживає */
+.school-hero .school-alive { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.school-hero.alive { box-shadow: 0 0 0 4px #ffe066, 0 0 40px rgba(255, 224, 102, .6); }
+.gate-star { position: absolute; z-index: 3; width: 44px; height: 44px; margin: -22px 0 0 -22px; border: 0; padding: 0; border-radius: 50%; cursor: pointer; background: transparent; }
+.gate-star::after { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 246, 180, .9), rgba(255, 224, 102, 0) 70%); opacity: 0; transition: opacity .2s; }
+.gate-star:hover::after, .gate-star:focus-visible::after { opacity: .7; }
+.gate-star:focus-visible { outline: 3px solid var(--magic); }
+.gate-star.ready::after { animation: gem-pulse 1.4s ease-in-out infinite; }
+.school-hero.alive .gate-star.ready::after { background: radial-gradient(circle, rgba(200, 190, 255, .9), rgba(162, 155, 254, 0) 70%); }
+@media (max-width: 640px) { .gate-star { width: 36px; height: 36px; margin: -18px 0 0 -18px; } }

@@ -627,6 +627,11 @@
           <figure class="map-wrap">
             <svg class="map" viewBox="0 0 ${MAP_W} ${MAP_H}" role="group" aria-label="Карта СилаВолії">
               ${MAP_TERRAIN}
+              <image id="aliveMap" x="0" y="0" width="${MAP_W}" height="${MAP_H}" preserveAspectRatio="xMidYMid slice" visibility="hidden"/>
+              <g class="map-gem" id="mapGem" transform="translate(500 9)" tabindex="0" role="button" aria-label="Чарівний кристал карти">
+                <circle class="gem-hit" r="26"/><circle class="gem-glow" r="17"/>
+                <path class="gem-shape" d="M0 -11 L8 0 L0 11 L-8 0 Z"/>
+              </g>
               <g id="pins">${LOCS.map((l) => `
                 <g class="pin${l.map.x < 230 ? " edge-l" : l.map.x > 770 ? " edge-r" : ""}" data-id="${l.id}" transform="translate(${l.map.x} ${l.map.y})" tabindex="0" role="button" aria-label="${esc(l.name)}">
                   <circle class="halo" r="34"/><circle class="dot" r="25"/>
@@ -659,9 +664,37 @@
         <h3>Печатки дослідника</h3>
         <div class="collect-progress" role="img" aria-label="Зібрано ${n} з ${LOCS.length}"><i style="width:${n / LOCS.length * 100}%"></i></div>
         <p><b>${n} з ${LOCS.length}</b>${n === LOCS.length ? " — 🎉 печатки всіх місць зібрано! СилаВолію досліджено." : " — у кожному місці на ілюстрації сховано чарівну іскорку."}</p>
+        ${n === LOCS.length ? `<p><button class="btn gold" type="button" id="aliveBtn">${store.get("mapAlive", false) ? "🗺️ Звичайна карта" : "✨ Оживити карту"}</button></p><p class="hint">Або натисни на чарівний кристал-ромб угорі рамки карти.</p>` : ""}
         ${n ? `<div class="chips">${LOCS.filter((l) => st[l.id]).map((l) => `<a class="chip crash" href="#${l.id}">${l.map.icon} ${esc(l.name)}</a>`).join("")}</div>` : ""}
         <p class="hint">Підказка: Лимонадна річка тече від Сирних гір через усю країну до моря.</p></div>`;
+      const ab = $("#aliveBtn", panel); if (ab) ab.addEventListener("click", () => toggleAlive());
+      syncGem();
     }
+
+    /* нагорода за всі печатки: карта оживає (кристал-ромб у рамці) */
+    const allStamped = () => LOCS.every((l) => stamps()[l.id]);
+    function syncGem() {
+      const done = allStamped(), alive = done && store.get("mapAlive", false);
+      const gem = $("#mapGem", main), img = $("#aliveMap", main);
+      gem.classList.toggle("ready", done); gem.classList.toggle("alive", alive);
+      gem.setAttribute("aria-label", done ? (alive ? "Повернути звичайну карту" : "Оживити карту") : "Чарівний кристал: збери всі печатки місць");
+      if (alive && !img.getAttribute("href")) img.setAttribute("href", "assets/img/world-alive.gif");
+      img.setAttribute("visibility", alive ? "visible" : "hidden");
+      $(".map", main).classList.toggle("alive", alive);
+    }
+    function toggleAlive() {
+      if (!allStamped()) {
+        const left = LOCS.length - LOCS.filter((l) => stamps()[l.id]).length;
+        celebrate("💎", "Чарівний кристал", "Карта ще спить", `Збери печатки всіх місць СилаВолії — і кристал оживить карту. Залишилося печаток: ${left}.`, `${LOCS.length - left} з ${LOCS.length} печаток`);
+        return;
+      }
+      store.set("mapAlive", !store.get("mapAlive", false));
+      intro();
+      if (store.get("mapAlive", false)) $(".map-wrap", main).scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    const gemEl = $("#mapGem", main);
+    gemEl.addEventListener("click", toggleAlive);
+    gemEl.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleAlive(); } });
     function showMap(focusId) {
       current = null;
       scene.hidden = true; scene.innerHTML = "";
@@ -753,7 +786,7 @@
         sp.classList.add("got");
         const n = LOCS.filter((x) => st[x.id]).length;
         celebrate(l.map.icon, "Печатка дослідника!", l.name,
-          n === LOCS.length ? "🎉 Ти зібрав(-ла) печатки всіх місць СилаВолії!" : `Печатка місця «${l.name}» тепер у твоїй колекції.`,
+          n === LOCS.length ? "🎉 Печатки всіх місць СилаВолії зібрано! Повернись до карти й натисни на чарівний кристал-ромб угорі рамки — карта оживе!" : `Печатка місця «${l.name}» тепер у твоїй колекції.`,
           `${n} з ${LOCS.length} печаток`);
         refreshCounters(); checkBadges();
         setTimeout(() => openScene(l.id, false), 650);
@@ -936,6 +969,10 @@
     { x: 50, y: 14, icon: "🔔", t: "Вежа з Дзвоном-Всезнайком", lesson: "potion" },
     { x: 71, y: 44, icon: "💎", t: "Зала з Магічним Кристалом", lesson: "exam" },
   ];
+  /* нагорода за серію «Школа «ШляхдоМрій»»: зірочка на воротах оживляє школу */
+  const SCHOOL_BOOKS = () => D.stories.filter((s) => s.series === "B" && readable(s));
+  const schoolBooksLeft = () => { const rm = store.get("read", {}); return SCHOOL_BOOKS().filter((s) => !rm[s.id]); };
+
   pages.school = function (main) {
     const sch = byId(C.locations, "school");
     const list = D.stories.filter((s) => s.location === "school");
@@ -944,7 +981,9 @@
         <figure class="school-hero">
           <img src="assets/img/school-s.jpg" srcset="assets/img/school-s.jpg 800w, assets/img/school.jpg 1600w" sizes="(max-width: 1120px) 100vw, 1088px"
             alt="Школа «ШляхдоМрій»: вежа-бібліотека з літаючими книгами, оранжерея, водоспад, вежа з дзвоном, зала з Магічним Кристалом; біля веселкової брами — Фін, Краш і Луна" width="1600" height="893">
+          <img class="school-alive" alt="" hidden>
           ${SCHOOL_SPOTS.map((p) => `<a class="spot" href="lesson.html?id=${p.lesson}" style="left:${p.x}%;top:${p.y}%"><span class="spot-ico">${p.icon}</span><span class="spot-t">${esc(p.t)}</span></a>`).join("")}
+          <button class="gate-star" type="button" style="left:60.4%;top:68.9%"></button>
         </figure>
         <h1>Школа «ШляхдоМрій»</h1><p class="lead">${esc(sch.desc)}.</p>
         <p><b>У школі є:</b> ${esc(sch.places.join(", "))}.</p></section>
@@ -957,6 +996,28 @@
       <section class="section wrap"><h2>Ігри</h2><p class="lead">Чарівні випробування для майбутніх учнів школи.</p>
         <div class="grid">${gameCards("adventure")}</div></section>`;
     if (window.SVLessons) window.SVLessons.schoolSection($("#lessons", main));
+
+    const hero = $(".school-hero", main), star = $(".gate-star", main), anim = $(".school-alive", main);
+    function syncSchool() {
+      const done = !schoolBooksLeft().length, alive = done && store.get("schoolAlive", false);
+      star.classList.toggle("ready", done); hero.classList.toggle("alive", alive);
+      star.setAttribute("aria-label", done ? (alive ? "Зупинити чари школи" : "Оживити школу") : "Чарівна зірочка на воротах школи");
+      star.title = star.getAttribute("aria-label");
+      if (alive && !anim.getAttribute("src")) anim.src = "assets/img/school-alive.gif";
+      anim.hidden = !alive;
+    }
+    star.addEventListener("click", () => {
+      const left = schoolBooksLeft(), all = SCHOOL_BOOKS().length;
+      if (left.length) {
+        const next = left[0];
+        celebrate("⭐", "Чарівна зірочка", "Ворота ще сплять",
+          `Прочитай усі казки серії «Школа «ШляхдоМрій»» — і зірочка оживить школу. Залишилось: ${left.map((s) => "«" + s.title + "»").join(", ")}.`,
+          `${all - left.length} з ${all} казок`, [`read.html?id=${next.id}`, "Читати далі"]);
+        return;
+      }
+      store.set("schoolAlive", !store.get("schoolAlive", false)); syncSchool();
+    });
+    syncSchool();
   };
 
   /* ---------- читалка ---------- */
@@ -1022,7 +1083,13 @@
       $("#next").disabled = i === total - 1;
       if (i === total - 1) {
         const rm = store.get("read", {});
-        if (!rm[s.id]) { rm[s.id] = Date.now(); store.set("read", rm); checkBadges(); }
+        if (!rm[s.id]) {
+          rm[s.id] = Date.now(); store.set("read", rm); checkBadges();
+          if (s.series === "B" && !schoolBooksLeft().length)
+            setTimeout(() => celebrate("🏫", "Серію прочитано!", "Школа «ШляхдоМрій»",
+              "Усі казки про школу прочитано! Тепер натисни на зірочку на воротах школи — і школа оживе.",
+              `${SCHOOL_BOOKS().length} з ${SCHOOL_BOOKS().length} казок`, ["school.html", "До школи"]), 900);
+        }
         root.innerHTML = endPage();
         $("#again").addEventListener("click", () => go(-i));
         root.querySelectorAll(".end-opts .answer").forEach((b) => b.addEventListener("click", () => {
