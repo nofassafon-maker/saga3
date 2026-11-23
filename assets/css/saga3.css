@@ -585,3 +585,19 @@ svg.map.alive { box-shadow: 0 0 0 4px #ffe066, 0 0 40px rgba(255, 224, 102, .6);
 .gate-star.ready::after { animation: gem-pulse 1.4s ease-in-out infinite; }
 .school-hero.alive .gate-star.ready::after { background: radial-gradient(circle, rgba(200, 190, 255, .9), rgba(162, 155, 254, 0) 70%); }
 @media (max-width: 640px) { .gate-star { width: 36px; height: 36px; margin: -18px 0 0 -18px; } }
+
+/* артефакти на сторінці «Світ»: удвічі менші, відкриті світяться й оживають */
+.art-grid.art-grid-sm { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.art-grid-sm .art-card .body { padding: 8px; }
+.art-grid-sm .art-card .chips { gap: 4px; }
+.art-grid-sm .art-card .chip { font-size: .72rem; padding: 2px 7px; }
+.art-grid-sm .art-card.open { box-shadow: 0 0 0 3px #ffe066, 0 0 18px rgba(255, 224, 102, .75); }
+.art-grid-sm .art-card.open .art-img { animation: art-shine 2.4s ease-in-out infinite; }
+@keyframes art-shine { 50% { filter: brightness(1.12) saturate(1.15); } }
+.art-grid-sm .art-card.has-gif { cursor: pointer; }
+.art-grid-sm .art-card.has-gif:focus-visible { outline: 3px solid var(--magic); outline-offset: 3px; }
+.art-play { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 15px;
+  background: rgba(28, 18, 51, .75); box-shadow: 0 0 0 2px #ffe066; pointer-events: none; }
+.art-card.alive .art-play { background: #ffe066; }
+.art-card.alive .art-img { animation: none; }
+@media (prefers-reduced-motion: reduce) { .art-grid-sm .art-card.open .art-img { animation: none; } }

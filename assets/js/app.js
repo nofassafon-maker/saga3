@@ -32,6 +32,16 @@
       : `<div class="card art-card no-img"><div class="body"><div class="tc-ico">✨</div><h3>${esc(a.name)}</h3><p>${esc(a.desc)}</p>${extra}</div></div>`;
   }
 
+  /* артефакти зі «живими» GIF (assets/img/artifacts/<id>.gif) */
+  const ART_GIF = new Set(["abacus", "friendship_scent", "emotion_clock", "farbogray", "dodaysyl", "feeling_key", "compass", "crystal", "whisper_shell", "empathy_seed", "bond_thread", "farbosvit", "zbyrayznan", "bell_tower"]);
+  function worldArtCard(a) {
+    const open = a.stories.some((id) => store.get("read", {})[id]), gif = open && a.img && ART_GIF.has(a.id);
+    const chips = `<div class="chips">${a.stories.map(storyLink).join("")}</div>`;
+    if (!a.img) return artCard(a, chips);
+    return `<div class="card art-card${open ? " open" : ""}${gif ? " has-gif" : ""}"${gif ? ` data-gif="${a.img}.gif" tabindex="0" role="button" aria-pressed="false" aria-label="Оживити артефакт: ${esc(a.name)}"` : ""}>
+      ${artImg(a)}${gif ? '<span class="art-play" aria-hidden="true">✨</span>' : ""}<div class="body">${chips}</div></div>`;
+  }
+
   /* «до / після»: перетворення персонажа (assets/img/villains/<id>-before|-after) */
   function transform(v) {
     if (!v.img) return "";
@@ -646,9 +656,24 @@
         <div class="wrap"><aside class="map-panel card" id="panel" aria-live="polite"></aside></div>
       </section>
       <section class="scene-view" id="scene" hidden></section>
-      <section class="section wrap" id="artifacts"><h2>Чарівні артефакти</h2><div class="grid art-grid">${C.artifacts.map((a) => artCard(a, `<div class="chips">${a.stories.map(storyLink).join("")}</div>`)).join("")}</div></section>`;
+      <section class="section wrap" id="artifacts"><h2>Чарівні артефакти</h2>
+        <p class="lead">Картки, які вже відкрито у Скарбниці, світяться. Натисни на таку картку — і артефакт оживе!</p>
+        <div class="grid art-grid art-grid-sm">${C.artifacts.map(worldArtCard).join("")}</div></section>`;
 
     const panel = $("#panel", main), scene = $("#scene", main), mapView = $("#mapView", main);
+    // артефакти: відкриті у Скарбниці світяться й оживають (GIF) від натискання
+    main.querySelectorAll(".art-card.has-gif").forEach((card) => {
+      const img = $(".art-img", card), name = card.getAttribute("aria-label");
+      const toggle = (e) => {
+        if (e.target.closest("a")) return;
+        const on = !card.classList.contains("alive");
+        if (on) { img.dataset.src = img.getAttribute("src"); img.dataset.srcset = img.getAttribute("srcset") || ""; img.dataset.sizes = img.getAttribute("sizes") || ""; img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = `${card.dataset.gif}`; }
+        else { if (img.dataset.sizes) img.setAttribute("sizes", img.dataset.sizes); if (img.dataset.srcset) img.setAttribute("srcset", img.dataset.srcset); img.src = img.dataset.src; }
+        card.classList.toggle("alive", on); card.setAttribute("aria-pressed", String(on));
+      };
+      card.addEventListener("click", toggle);
+      card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(e); } });
+    });
     // на телефоні карта ширша за екран: починаємо з центру
     requestAnimationFrame(() => { const w = $(".map-full .map-wrap", main); if (w && w.scrollWidth > w.clientWidth) w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2; });
 
