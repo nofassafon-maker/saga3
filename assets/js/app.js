@@ -1133,9 +1133,9 @@
         }));
       } else {
         const p = s.pages[i];
-        const cls = ["page", "page-enter", p.img ? "has-img" : "text-only", p.text.length ? "has-text" : "cover-only"].join(" ");
+        const cls = ["page", "page-enter", p.img ? "has-img" : "text-only", p.text.length ? "has-text" : "cover-only", i === 0 ? "first" : ""].join(" ").trim();
         root.innerHTML = `<div class="${cls}" style="--dir:${dir < 0 ? "-30px" : "30px"}">
-          ${p.img ? `<div class="pic"><img src="${p.img_s || p.img}" ${p.img_s ? `srcset="${p.img_s} 700w, ${p.img} 1400w" sizes="(max-width: 760px) 92vw, 50vw"` : ""} alt="${i === 0 ? "Обкладинка" : "Ілюстрація, сторінка " + i}"></div>` : ""}
+          ${p.img ? `<div class="pic"><img src="${i === 0 ? p.img : p.img_s || p.img}" ${p.img_s && i > 0 ? `srcset="${p.img_s} 700w, ${p.img} 1400w" sizes="(max-width: 760px) 92vw, 50vw"` : ""} alt="${i === 0 ? "Обкладинка" : "Ілюстрація, сторінка " + i}"></div>` : ""}
           ${p.text.length ? `<div class="txt" style="--fs:${fs}rem">${p.text.map((t) => `<p>${esc(t)}</p>`).join("")}</div>` : ""}
         </div>`;
         const np = s.pages[i + 1];

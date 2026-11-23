@@ -601,3 +601,14 @@ svg.map.alive { box-shadow: 0 0 0 4px #ffe066, 0 0 40px rgba(255, 224, 102, .6);
 .art-card.alive .art-play { background: #ffe066; }
 .art-card.alive .art-img { animation: none; }
 @media (prefers-reduced-motion: reduce) { .art-grid-sm .art-card.open .art-img { animation: none; } }
+
+/* перша сторінка книжки (обкладинка) — максимально великою: уся висота між шапкою і панеллю гортання */
+.page.first { display: block; }
+.page.first .pic { max-width: none; padding: 0; background: none; box-shadow: none; }
+.page.first .pic img { display: block; width: auto; height: auto; max-width: 100%; max-height: calc(100vh - 160px); max-height: calc(100dvh - 160px);
+  margin: 0 auto; border-radius: 16px; box-shadow: 0 14px 40px rgba(40, 20, 80, .28); }
+body.reader.focus .page.first .pic { background: none; }
+@media (max-width: 640px) {
+  .page.first .pic { margin: 0 -16px; }
+  .page.first .pic img { border-radius: 0; box-shadow: none; }
+}
