@@ -113,6 +113,13 @@ button { font-family:inherit; }
 .final-art { width:min(320px,86%); border-radius:20px; border:4px solid var(--gold); box-shadow:0 0 50px rgba(255,210,63,.5); animation:pop .8s; }
 @media (max-height:660px) { .bed .pl.s3 { font-size:34px; } .pw .ring { width:48px; height:48px; } #tree { width:70px; height:70px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition:none !important; } }
+
+/* більший діалог з героєм і більший шрифт */
+.talk { gap:16px; padding:16px; max-width:520px; border:2px solid rgba(255,210,63,.35); }
+.talk img { width:92px; height:92px; flex:0 0 92px; border-width:4px; }
+.talk b { font-size:16px; letter-spacing:.8px; } .talk span { font-size:19px; line-height:1.45; }
+.visitor img { width:70px; height:70px; } .visitor b { font-size:15px; } .visitor span { font-size:17px; }
+@media (max-width:420px) { .talk img { width:72px; height:72px; flex-basis:72px; } .talk span { font-size:17.5px; } .visitor span { font-size:15.5px; } }
 </style>
 </head>
 <body>
