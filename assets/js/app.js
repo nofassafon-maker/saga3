@@ -286,11 +286,11 @@
           </div>
         </section>
 
-        <nav class="tnav" aria-label="Розділи скарбів"><div class="tnav-in">${[
+        ${quickNav([
           ["stars", "⭐", "Зірки", p.total], ["badges", "🏅", "Значки", got.size], ["cards", "🃏", "Герої", heroOpen ? 3 : 0],
           ["understood", "🌗", "Зрозуміли", vOpen], ["friends", "💛", "Друзі", fOpen], ["artifacts", "💎", "Артефакти", aOpen],
           ["crafts", "🛠️", "Витвори", store.get("crafts", []).length], ["secrets", "✨", "Секрети", p.secrets], ["stamps", "🧭", "Печатки", p.stamps],
-        ].map(([id, ic, t, n]) => `<a href="#${id}" data-sec="${id}"><span aria-hidden="true">${ic}</span> ${t}<b>${n}</b></a>`).join("")}</div></nav>
+        ])}
 
         <section class="section wrap" id="badges"><h2>Магічні значки · ${got.size} з ${BADGES.length}</h2>
           <div class="badge-grid">${BADGES.map((b) => `<div class="mbadge${got.has(b.id) ? " on" : ""}" title="${esc(b.desc)}">
@@ -360,35 +360,42 @@
       });
       if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
 
-      // швидка навігація: плавний перехід і підсвічування розділу, який зараз на екрані
-      const setHdr = () => { const h = document.querySelector("header.top"); if (h) document.documentElement.style.setProperty("--hdr-h", h.offsetHeight + "px"); };
-      setHdr(); if (!window.__tnavRS) { window.__tnavRS = true; window.addEventListener("resize", setHdr); }
-      const links = [...main.querySelectorAll(".tnav a")];
-      links.forEach((a) => a.addEventListener("click", (e) => {
-        const t = document.getElementById(a.dataset.sec); if (!t) return;
-        e.preventDefault(); t.scrollIntoView({ behavior: "smooth", block: "start" }); history.replaceState(null, "", "#" + a.dataset.sec);
-      }));
-      const mark = (id) => links.forEach((a) => {
-        const on = a.dataset.sec === id; a.classList.toggle("on", on);
-        if (on) { a.setAttribute("aria-current", "true"); const bar = a.parentElement; bar.scrollTo({ left: a.offsetLeft - bar.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" }); } else a.removeAttribute("aria-current");
-      });
-      const secs = links.map((a) => document.getElementById(a.dataset.sec)).filter(Boolean);
-      let cur = "", raf = 0;
-      const spy = () => {
-        raf = 0;
-        const nav = $(".tnav", main); if (!nav || !nav.isConnected) return;
-        const line = nav.getBoundingClientRect().bottom + 24;
-        let id = secs[0].id;
-        for (const t of secs) if (t.getBoundingClientRect().top <= line) id = t.id;
-        if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) id = secs[secs.length - 1].id;   // самий низ сторінки
-        const hdr = document.querySelector("header.top"); if (hdr && nav.getBoundingClientRect().top > hdr.offsetHeight + 2) id = secs[0].id;   // панель ще не прилипла — ми вгорі
-        if (id !== cur) { cur = id; mark(id); }
-      };
-      if (window.__tnavSpy) window.removeEventListener("scroll", window.__tnavSpy);
-      window.__tnavSpy = () => { if (!raf) raf = requestAnimationFrame(spy); };
-      window.addEventListener("scroll", window.__tnavSpy, { passive: true }); spy();
+      bindQuickNav(main);
     };
     render();
+  }
+
+  /* швидка навігація по розділах сторінки (липка панель .tnav під шапкою) */
+  const quickNav = (items) => `<nav class="tnav" aria-label="Розділи сторінки"><div class="tnav-in">${items.map(([id, ic, t, n]) =>
+    `<a href="#${id}" data-sec="${id}"><span aria-hidden="true">${ic}</span> ${t}${n === undefined ? "" : `<b>${n}</b>`}</a>`).join("")}</div></nav>`;
+  function bindQuickNav(main) {
+    // швидка навігація: плавний перехід і підсвічування розділу, який зараз на екрані
+    const setHdr = () => { const h = document.querySelector("header.top"); if (h) document.documentElement.style.setProperty("--hdr-h", h.offsetHeight + "px"); };
+    setHdr(); if (!window.__tnavRS) { window.__tnavRS = true; window.addEventListener("resize", setHdr); }
+    const links = [...main.querySelectorAll(".tnav a")];
+    links.forEach((a) => a.addEventListener("click", (e) => {
+      const t = document.getElementById(a.dataset.sec); if (!t) return;
+      e.preventDefault(); t.scrollIntoView({ behavior: "smooth", block: "start" }); history.replaceState(null, "", "#" + a.dataset.sec);
+    }));
+    const mark = (id) => links.forEach((a) => {
+      const on = a.dataset.sec === id; a.classList.toggle("on", on);
+      if (on) { a.setAttribute("aria-current", "true"); const bar = a.parentElement; bar.scrollTo({ left: a.offsetLeft - bar.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" }); } else a.removeAttribute("aria-current");
+    });
+    const secs = links.map((a) => document.getElementById(a.dataset.sec)).filter(Boolean);
+    let cur = "", raf = 0;
+    const spy = () => {
+      raf = 0;
+      const nav = $(".tnav", main); if (!nav || !nav.isConnected) return;
+      const hdr = document.querySelector("header.top");
+      const line = (hdr ? hdr.offsetHeight : 64) + nav.offsetHeight + 24;   // де буде низ прилиплої панелі
+      let id = secs[0].id;
+      for (const t of secs) if (t.getBoundingClientRect().top <= line) id = t.id;
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) id = secs[secs.length - 1].id;   // самий низ сторінки
+      if (id !== cur) { cur = id; mark(id); }
+    };
+    if (window.__tnavSpy) window.removeEventListener("scroll", window.__tnavSpy);
+    window.__tnavSpy = () => { if (!raf) raf = requestAnimationFrame(spy); };
+    window.addEventListener("scroll", window.__tnavSpy, { passive: true }); spy();
   }
 
   /* бібліотека пригод: порядок, короткий опис, прогрес читання */
@@ -1035,8 +1042,10 @@
   pages.school = function (main) {
     const sch = byId(C.locations, "school");
     const list = D.stories.filter((s) => s.location === "school");
+    const LS = (window.SVLessons && window.SVLessons.LESSONS) || [];
+    const lessonsDone = LS.filter((l) => (store.get("stars", {}))[l.id]).length;
     main.innerHTML = `
-      <section class="section wrap">
+      <section class="section wrap" id="about">
         <figure class="school-hero">
           <img src="assets/img/school-s.jpg" srcset="assets/img/school-s.jpg 800w, assets/img/school.jpg 1600w" sizes="(max-width: 1120px) 100vw, 1088px"
             alt="Школа «ШляхдоМрій»: вежа-бібліотека з літаючими книгами, оранжерея, водоспад, вежа з дзвоном, зала з Магічним Кристалом; біля веселкової брами — Фін, Краш і Луна" width="1600" height="893">
@@ -1046,15 +1055,18 @@
         </figure>
         <h1>Школа «ШляхдоМрій»</h1><p class="lead">${esc(sch.desc)}.</p>
         <p><b>У школі є:</b> ${esc(sch.places.join(", "))}.</p></section>
+      ${quickNav([["about", "🏫", "Школа"], ["lessons", "🎓", "Уроки", `${lessonsDone}/${LS.length}`], ["diploma", "📜", "Диплом"],
+        ["stories", "📖", "Історії", list.length], ["math", "🧮", "Арифметика", D.games.filter((g) => g.group === "math").length], ["games", "🎮", "Ігри", D.games.filter((g) => (g.group || "adventure") === "adventure").length]])}
       <section class="section wrap" id="lessons"></section>
-      <section class="section wrap"><h2>Шкільні історії</h2><div class="grid">${list.map(storyCard).join("")}</div></section>
+      <section class="section wrap" id="stories"><h2>Шкільні історії</h2><div class="grid">${list.map(storyCard).join("")}</div></section>
       <section class="section wrap" id="math"><h2>Ментальна арифметика</h2>
         <p class="lead">Абакус СилаВолії приховує шлях до таємних кімнат — а ці тренажери допоможуть рахувати швидко, як Луна.
           ${story("B07") && readable(story("B07")) ? ` Спершу прочитай казку <a href="read.html?id=B07">«${esc(story("B07").title)}»</a>.` : ""}</p>
         <div class="grid">${gameCards("math")}</div></section>
-      <section class="section wrap"><h2>Ігри</h2><p class="lead">Чарівні випробування для майбутніх учнів школи.</p>
+      <section class="section wrap" id="games"><h2>Ігри</h2><p class="lead">Чарівні випробування для майбутніх учнів школи.</p>
         <div class="grid">${gameCards("adventure")}</div></section>`;
     if (window.SVLessons) window.SVLessons.schoolSection($("#lessons", main));
+    bindQuickNav(main);
 
     const hero = $(".school-hero", main), star = $(".gate-star", main), anim = $(".school-alive", main);
     function syncSchool() {

@@ -46,6 +46,31 @@
     note: (i) => tone([523, 659, 784, 988, 1175][i % 5], 0.35, "sine", 0.18),
   };
 
+  /* ---------- вчителі (анімовані портрети з «Пригоди Фіна/персони») і картинки ---------- */
+  const IMG = "assets/img/";
+  const TEACH = {
+    owl: { name: "Сова-Всезнайка", talk: IMG + "school/owl-talk.gif", happy: IMG + "school/owl-happy.gif" },
+    aria: { name: "Професорка Арія", talk: IMG + "school/aria-talk.gif", happy: IMG + "school/aria-happy.gif" },
+    founder: { name: "Засновник школи", talk: IMG + "school/founder-talk.gif", happy: IMG + "school/founder-happy.gif" },
+    fin: { name: "Фін", talk: IMG + "heroes/fin.jpg", happy: IMG + "heroes/fin.jpg", still: true },
+    crash: { name: "Краш", talk: IMG + "heroes/crash.jpg", happy: IMG + "heroes/crash.jpg", still: true },
+    luna: { name: "Луна", talk: IMG + "heroes/luna.jpg", happy: IMG + "heroes/luna.jpg", still: true },
+  };
+  const artImg = (id, gif) => `${IMG}artifacts/${id}${gif ? ".gif" : "-s.jpg"}`;
+  const vImg = (id, after) => `${IMG}villains/${id}-${after ? "after" : "before"}-s.jpg`;
+  /* вчитель говорить: анімований портрет + бульбашка */
+  function teacherSay(who, text, mood = "talk", cls = "") {
+    const t = TEACH[who] || TEACH.owl;
+    return `<div class="tsay ${cls}${t.still ? " still" : ""}"><img class="tsay-pic" src="${mood === "happy" ? t.happy : t.talk}" alt="${esc(t.name)}"><div class="tsay-bubble"><b>${esc(t.name)}</b><span>${text}</span></div></div>`;
+  }
+  /* банер уроку — ілюстрація з казки, за якою урок */
+  function lessonBanner(les) {
+    const s = story(les.story);
+    if (!s || !readable(s)) return "";
+    const p = s.pages.find((x, k) => k >= (les.page || 1) && x.img) || s.pages[0];
+    return p && p.img ? (p.img_s || p.img) : "";
+  }
+
   /* ---------- прогрес ---------- */
   const stars = () => store.get("stars", {});
   const giveStar = (id) => { const s = stars(); s[id] = true; store.set("stars", s); if (SV.refreshCounters) { SV.refreshCounters(); SV.checkBadges(); } };
@@ -56,7 +81,7 @@
 
   /* 1. Заклинання Радості — розфарбуй сірі хмаринки дзвіночком Краша */
   L({
-    id: "joy", icon: "☀️", title: "Заклинання Радості", teacher: "Сова-Всезнайка та Краш", story: "B00",
+    id: "joy", guide: "owl", art: "", page: 1, icon: "☀️", title: "Заклинання Радості", teacher: "Сова-Всезнайка та Краш", story: "B00",
     skill: "Уважність і швидкість",
     intro: "Над школою пливуть сірі сумні хмаринки. Торкайся їх — і Дзвіночок Радості Краша перетворить сум на веселку! Розфарбуй 15 хмаринок, поки сяє сонце.",
     moral: "Навіть найменша радість перемагає найбільший смуток.",
@@ -100,7 +125,7 @@
 
   /* 2. Зілля Зоряного Сяйва — запам'ятай порядок інгредієнтів */
   L({
-    id: "potion", icon: "🧪", title: "Зілля Зоряного Сяйва", teacher: "Луна (медальйон підказує)", story: "B05",
+    id: "potion", guide: "aria", art: "", page: 2, icon: "🧪", title: "Зілля Зоряного Сяйва", teacher: "Професорка Арія та Луна", story: "B05",
     skill: "Пам'ять",
     intro: "Медальйон Луни показує, у якому порядку кидати інгредієнти в казанок. Подивись, запам'ятай і повтори! Зілля буде готове після п'яти вдалих спроб.",
     moral: "Знання народжуються у сміливості, доброті та дружбі.",
@@ -150,7 +175,7 @@
     ["fear_shadows", "З Дзеркального Озера встали Тіні Страху — у кожного своя.", "Допомогти друзям подолати їхні страхи", ["Втекти від озера", "Битися зі своєю тінню самому"]],
   ];
   L({
-    id: "friendship", icon: "💞", title: "Мова Дружби", teacher: "Сова-Всезнайка", story: "C08",
+    id: "friendship", guide: "owl", art: "friendship_scent", page: 1, icon: "💞", title: "Мова Дружби", teacher: "Сова-Всезнайка", story: "C08",
     skill: "Емпатія",
     intro: "У СилаВолії ворогів не проганяють — їх розуміють. Прочитай, що сталося, і обери, що допоможе по-справжньому. Відповідай серцем!",
     moral: "Кожна «темна» істота стає світлішою, коли її зрозуміють.",
@@ -159,7 +184,8 @@
       const name = v ? v.name : "";
       const named = name.split(/[\s-]+/).some((w) => w.length > 3 && sit.includes(w));
       const head = name && !named ? `<b>${esc(name)}</b>. ` : "";   // не повторювати ім'я двічі
-      return { q: `${head}${esc(sit)}<br><b>Що допоможе?</b>`, ok, bad, after: v && v.became ? `Так і сталося в казці: ${v.name} → ${v.became}.` : "", sid: v && v.story };
+      return { q: `${head}${esc(sit)}<br><b>Що допоможе?</b>`, ok, bad, after: v && v.became ? `Так і сталося в казці: ${v.name} → ${v.became}.` : "", sid: v && v.story,
+        img: vImg(vid), imgOk: `${IMG}villains/${vid}.gif`, imgCls: "morph-gif" };
     }), 6, "Ти відповідаєш серцем!"); },
   });
 
@@ -173,18 +199,18 @@
     ["То що ж насправді живить ДодайСил?", "Любов до друзів", ["Сила м'язів", "Найскладніші закляття"]],
   ];
   L({
-    id: "faith", icon: "🔮", title: "Камінь «ДодайСил»", teacher: "Сова-Всезнайка", story: "B02",
+    id: "faith", guide: "owl", art: "dodaysyl", page: 1, icon: "🔮", title: "Камінь «ДодайСил»", teacher: "Сова-Всезнайка", story: "B02",
     skill: "Віра в себе",
     intro: "Камінь ДодайСил світиться не від сили, а від щирих почуттів. Допоможи Фіну: обирай теплі думки — і камінь розгориться золотом!",
     moral: "Наймогутніша магія — нерозривний зв'язок дружби.",
     run(area, done) {
       let k = 0;
-      area.innerHTML = `<div class="stone-wrap"><div class="stone" id="st">🪨</div><div class="glow-meter"><i id="gm"></i></div></div><div id="qa"></div>`;
+      area.innerHTML = `<div class="stone-wrap"><div class="stone stone-img" id="st" style="--g:0"><img src="${artImg("dodaysyl")}" alt="Камінь ДодайСил"></div><div class="glow-meter"><i id="gm"></i></div></div><div id="qa"></div>`;
       const st = $("#st", area), gm = $("#gm", area), qa = $("#qa", area);
       function ask() {
         const [q, ok, bad] = FAITH[k];
         const opts = shuffle([ok, ...bad]);
-        qa.innerHTML = `<p class="question">${esc(q)}</p><p class="hint" style="text-align:center;margin-top:-8px">Обери теплу думку 💛</p>
+        qa.innerHTML = `<p class="question">${esc(q)}</p><p class="hint" style="text-align:center;margin-top:-8px">Обери теплу думку 💛 · ${k} / ${FAITH.length}</p>
           <div class="answers">${opts.map((o) => `<button class="answer" type="button">${esc(o)}</button>`).join("")}</div><p class="feedback" id="fb"></p>`;
         qa.querySelectorAll(".answer").forEach((b) => b.addEventListener("click", async () => {
           if (b.textContent === ok) {
@@ -192,7 +218,7 @@
             b.classList.add("right"); sfx.good(); k++;
             st.style.setProperty("--g", k / FAITH.length); gm.style.width = (k / FAITH.length) * 100 + "%";
             st.classList.add("pulse"); await wait(700); st.classList.remove("pulse");
-            if (k === FAITH.length) { st.textContent = "💎"; sfx.win(); return done(true, "Камінь спалахнув золотою веселкою!"); }
+            if (k === FAITH.length) { st.querySelector("img").src = artImg("dodaysyl", true); sfx.win(); await wait(900); return done(true, "Камінь спалахнув золотою веселкою!"); }
             ask();
           } else { b.classList.add("wrong"); b.disabled = true; sfx.soft(); $("#fb", qa).textContent = "Камінь лишився холодним… Спробуй тепліше 💛"; }
         }));
@@ -207,14 +233,14 @@
     const qs = [];
     for (const s of pick(S, 4)) qs.push({ q: `Яка мораль казки <b>«${esc(s.title)}»</b>?`, ok: s.lesson, bad: pick(S.filter((x) => x.lesson !== s.lesson), 2).map((x) => x.lesson), sid: s.id });
     const V = C.villains.filter((v) => v.became);
-    for (const v of pick(V, 2)) qs.push({ q: `Що сталося з героєм «<b>${esc(v.name)}</b>» наприкінці казки?`, ok: v.became, bad: pick(V.filter((x) => x !== v), 2).map((x) => x.became), sid: v.story });
+    for (const v of pick(V, 2)) qs.push({ q: `Що сталося з «<b>${esc(v.name)}</b>» наприкінці казки?`, ok: v.became, bad: pick(V.filter((x) => x !== v), 2).map((x) => x.became), sid: v.story, img: v.img ? vImg(v.id) : "", imgOk: v.img ? vImg(v.id, true) : "" });
     const A = C.artifacts.filter((a) => a.stories.length);
-    for (const a of pick(A, 2)) { const s = story(a.stories[0]); if (s) qs.push({ q: `У якій казці з'являється <b>${esc(a.name)}</b>?`, ok: s.title, bad: pick(S.filter((x) => !a.stories.includes(x.id)), 2).map((x) => x.title), sid: s.id }); }
-    for (const h of pick(C.heroes, 2)) qs.push({ q: `Чия це сила: «${esc(h.power.split(":")[0].replace(/\(.*?\)/g, ""))}»?`, ok: h.name, bad: C.heroes.filter((x) => x !== h).map((x) => x.name) });
+    for (const a of pick(A, 2)) { const s = story(a.stories[0]); if (s) qs.push({ q: `У якій казці з'являється <b>${esc(a.name)}</b>?`, ok: s.title, bad: pick(S.filter((x) => !a.stories.includes(x.id)), 2).map((x) => x.title), sid: s.id, img: a.img ? artImg(a.id) : "", imgCls: "tall" }); }
+    for (const h of pick(C.heroes, 2)) qs.push({ q: `Чия це сила: «${esc(h.power.split(":")[0].replace(/\(.*?\)/g, ""))}»?`, ok: h.name, bad: C.heroes.filter((x) => x !== h).map((x) => x.name), imgOk: `${IMG}heroes/${h.id}.jpg` });
     return shuffle(qs);
   }
   L({
-    id: "knowledge", icon: "📖", title: "Книга «ЗбирайЗнань»", teacher: "Луна", story: "B03",
+    id: "knowledge", guide: "aria", art: "zbyrayznan", page: 1, icon: "📖", title: "Книга «ЗбирайЗнань»", teacher: "Професорка Арія", story: "B03",
     skill: "Знання казок",
     intro: "Легендарна книга не дає відповідей — вона ставить загадки про казки СилаВолії. Відповідай правильно на 7 з 10 запитань, і книга розкриє свої сторінки!",
     moral: "Довіра і цікавість відкривають найцінніші книги.",
@@ -223,7 +249,7 @@
 
   /* 6. Іспит «СловоСтріл» — лови добрі слова, оминай пікселі НаноПута */
   L({
-    id: "exam", icon: "💎", title: "Іспит «СловоСтріл»", teacher: "Сова-Всезнайка", story: "B04",
+    id: "exam", guide: "owl", art: "crystal", page: 1, icon: "💎", title: "Іспит «СловоСтріл»", teacher: "Сова-Всезнайка", story: "B04",
     skill: "Добрі слова",
     intro: "Наповни Магічний Кристал добрими словами! Торкайся слів, що падають згори. Але обережно: сірі пікселі 👾 — це підступи НаноПута, їх не чіпай.",
     moral: "Найсильніша магія — любов, довіра та єдність.",
@@ -231,7 +257,7 @@
       const GOAL = 12, TIME = 45;
       const WORDS = ["Дякую", "Пробач", "Люблю", "Радість", "Дружба", "Разом", "Мрія", "Надія", "Сміх", "Допоможу", "Обійми", "Ти зможеш", "Доброта", "Будь ласка"];
       area.innerHTML = `<div class="hud"><span>💎 <b id="sc">0</b> / ${GOAL}</span><div class="timer"><i id="tm"></i></div></div>
-        <div class="sky words" id="sky"><div class="crystal" id="cr">💎</div></div>`;
+        <div class="sky words" id="sky"><div class="crystal crystal-img" id="cr"><img src="${artImg("crystal")}" alt="Магічний Кристал"></div></div>`;
       const sky = $("#sky", area), sc = $("#sc", area), tm = $("#tm", area), cr = $("#cr", area);
       let score = 0, over = false, clock = null, every = 1100;
       function spawn() {
@@ -267,7 +293,7 @@
 
   /* 7. Щоденник Радості — три хороші речі сьогоднішнього дня */
   L({
-    id: "journal", icon: "📔", title: "Щоденник Радості", teacher: "Краш", story: "A03",
+    id: "journal", guide: "crash", art: "", page: 1, icon: "📔", title: "Щоденник Радості", teacher: "Краш", story: "A03",
     skill: "Вдячність",
     intro: "Краш знає секрет: радість росте, коли її помічаєш. Згадай три хороші речі, що сталися сьогодні, — навіть найменші. Записи бачиш лише ти: вони зберігаються тільки в цьому браузері.",
     moral: "Щастям не можна володіти, ним можна лише ділитися.",
@@ -310,7 +336,7 @@
     ["Півень зніс яйце на гребені даху. У який бік воно покотиться?", "Півні не несуть яєць", ["Ліворуч", "Праворуч"], "Яйця несуть кури, а не півні!"],
   ];
   L({
-    id: "riddles", icon: "🔮", title: "Кристал Мудрості", teacher: "Луна", story: "B07",
+    id: "riddles", guide: "aria", art: "abacus", page: 1, icon: "🔮", title: "Кристал Мудрості", teacher: "Професорка Арія та Луна", story: "B07",
     skill: "Логіка",
     intro: "У Бібліотеці загадок книги розмовляють — і загадують загадки! Розгадай щонайменше 5 із 6, і Кристал Мудрості засвітиться. Не поспішай: медальйон Луни світиться, коли думаєш.",
     moral: "Головний код СилаВолії — не числа, а наші таланти, об'єднані разом.",
@@ -336,14 +362,14 @@
     ["Учитель похвалив твою казку перед усім класом.", "joy", "Поділися радістю вдома — хай світиться ще яскравіше!"],
   ];
   L({
-    id: "emotions", icon: "💗", title: "Великий Емоційний Годинник", teacher: "Луна та Фін", story: "C11",
+    id: "emotions", guide: "luna", art: "emotion_clock", page: 1, icon: "💗", title: "Великий Емоційний Годинник", teacher: "Луна та Фін", story: "C11",
     skill: "Розуміння почуттів",
     intro: "У Місті Перевернутих Емоцій Великий Емоційний Годинник збився, і почуття переплуталися. Допоможи розставити їх на місця: прочитай, що сталося, і назви почуття. Упізнай правильно 5 із 7!",
     moral: "Хоробрість, світло і мудрість разом лагодять навіть почуття.",
     run(area, done) {
       const keys = Object.keys(FEEL);
       quiz(area, done, pick(EMO, 7).map(([sit, k, tip]) => ({
-        q: `${esc(sit)}<br><b>Яке це почуття?</b>`, ok: FEEL[k], bad: pick(keys.filter((x) => x !== k), 2).map((x) => FEEL[x]), after: "Що допомагає: " + tip,
+        q: `${esc(sit)}<br><b>Яке це почуття?</b>`, ok: FEEL[k], bad: pick(keys.filter((x) => x !== k), 2).map((x) => FEEL[x]), after: "Що допомагає: " + tip, big: FEEL[k].split(" ")[0],
       })), 5, "Почуття знову на своїх місцях — ти чудово їх розумієш!");
     },
   });
@@ -354,7 +380,7 @@
   const HUES = [["#F3A9B9", "рожев"], ["#F6C76D", "золот"], ["#77C9B1", "м'ятн"], ["#A78BD2", "лавандов"], ["#7fb7e8", "небесн"], ["#e8692e", "вогнян"]];
   const POWERS = ["Дарує сміливість", "Розганяє сум", "Допомагає подружитися", "Підказує розгадки", "Наповнює радістю", "Зігріває серце"];
   L({
-    id: "workshop", icon: "🎨", title: "Майстерня Артефактів", teacher: "Фін і Олівець «ФарбоСвіт»", story: "B06",
+    id: "workshop", guide: "fin", art: "farbosvit", page: 1, icon: "🎨", title: "Майстерня Артефактів", teacher: "Фін і Олівець «ФарбоСвіт»", story: "B06",
     skill: "Творчість",
     intro: "Олівець «ФарбоСвіт» втілює не бажання, а почуття. Обери форму, колір і чарівну силу — і дай своєму артефакту ім'я. Він житиме в «Моїх скарбах».",
     moral: "Творчість — це відповідальність за те, як твої мрії вплинуть на інших.",
@@ -395,21 +421,34 @@
   });
 
   /* ---------- спільна вікторина ---------- */
+  const PRAISE = ["Правильно!", "Чудово!", "Так тримати!", "Блискуче!", "Саме так!"];
+  const CHEER = ["Не зовсім — але ти вже ближче!", "Нічого страшного, помилки вчать!", "Майже! Подивись, яка відповідь правильна."];
   function quiz(area, done, items, need, how) {
-    let i = 0, right = 0;
+    let i = 0, right = 0, streak = 0;
+    const guide = area.dataset.guide || "owl";
     function ask() {
       const it = items[i];
       const opts = shuffle([it.ok, ...it.bad]);
-      area.innerHTML = `<div class="hud"><span>Запитання <b>${i + 1}</b> / ${items.length}</span><span>✅ ${right}</span></div>
-        <div class="qcard"><p class="question">${it.q}</p><div class="answers">${opts.map((o) => `<button class="answer" type="button">${esc(o)}</button>`).join("")}</div>
-        <p class="feedback" id="fb"></p><div class="qnext" id="nx"></div></div>`;
+      area.innerHTML = `<div class="hud"><span>Запитання <b>${i + 1}</b> / ${items.length}</span>
+          <span class="qpath" aria-hidden="true">${items.map((_, k) => `<i class="${k < i ? "done" : k === i ? "now" : ""}"></i>`).join("")}</span>
+          <span>✅ ${right}${streak >= 2 ? ` <b class="streak">🔥 ${streak}</b>` : ""}</span></div>
+        <div class="qcard">${it.img ? `<div class="qimg ${it.imgCls || ""}"><img src="${it.img}" alt=""></div>` : it.big ? `<div class="qbig" aria-hidden="true">❓</div>` : ""}
+          <p class="question">${it.q}</p><div class="answers">${opts.map((o) => `<button class="answer" type="button">${esc(o)}</button>`).join("")}</div>
+        <div id="fb" aria-live="polite"></div><div class="qnext" id="nx"></div></div>`;
       const fb = $("#fb", area), nx = $("#nx", area);
       area.querySelectorAll(".answer").forEach((b) => b.addEventListener("click", () => {
         if (nx.childElementCount) return;
         const ok = b.textContent === it.ok;
         area.querySelectorAll(".answer").forEach((x) => { x.disabled = true; if (x.textContent === it.ok) x.classList.add("right"); });
-        if (ok) { right++; sfx.good(); fb.textContent = "Правильно! 🌟 " + (it.after || ""); }
-        else { b.classList.add("wrong"); sfx.soft(); fb.textContent = "Не зовсім. Правильна відповідь підсвічена. " + (it.after || ""); }
+        if (ok) {
+          right++; streak++; sfx.good();
+          if (it.imgOk) { const q = $(".qimg img", area); if (q) { q.src = it.imgOk; q.parentElement.classList.add("ok"); } else $(".qcard", area).insertAdjacentHTML("afterbegin", `<div class="qimg ok"><img src="${it.imgOk}" alt=""></div>`); }
+          if (it.big) { const bg = $(".qbig", area); if (bg) { bg.textContent = it.big; bg.classList.add("ok"); } }
+          fb.innerHTML = teacherSay(guide, `${PRAISE[rnd(PRAISE.length)]}${streak >= 3 ? ` Уже ${streak} поспіль! 🔥` : ""} ${esc(it.after || "")}`, "happy", "fb-ok");
+        } else {
+          streak = 0; b.classList.add("wrong"); sfx.soft();
+          fb.innerHTML = teacherSay(guide, `${CHEER[rnd(CHEER.length)]} ${esc(it.after || "")}`, "talk", "fb-no");
+        }
         const s = it.sid && story(it.sid);
         nx.innerHTML = `${s && readable(s) ? `<a class="btn ghost" href="read.html?id=${s.id}" target="_blank">📖 «${esc(s.title)}»</a>` : ""}<button class="btn" type="button">${i + 1 < items.length ? "Далі →" : "Результат"}</button>`;
         nx.querySelector("button").addEventListener("click", (e) => { e.currentTarget.disabled = true; i++; i < items.length ? ask() : done(right >= need, `Правильних відповідей: ${right} з ${items.length}.` + (right >= need ? ` ${how}` : ` Потрібно ${need} — спробуй ще раз!`)); });
@@ -432,17 +471,20 @@
     const box = $("#box", main);
     const mb = $("#mute", main);
     mb.addEventListener("click", () => { store.set("mute", !muted()); mb.textContent = muted() ? "🔇" : "🔊"; mb.setAttribute("aria-pressed", String(muted())); });
+    const banner = lessonBanner(les);
     function intro() {
-      box.innerHTML = `<div class="body lesson-intro">
-        <div class="lesson-icon">${les.icon}</div><h1>${esc(les.title)}</h1>
+      box.innerHTML = `${banner ? `<div class="lesson-banner"><img src="${banner}" alt=""><div class="lb-title"><span class="lb-ico">${les.icon}</span><h1>${esc(les.title)}</h1></div></div>` : ""}
+        <div class="body lesson-intro">
+        ${banner ? "" : `<div class="lesson-icon">${les.icon}</div><h1>${esc(les.title)}</h1>`}
         <div class="chips" style="justify-content:center"><span class="chip">👩‍🏫 ${esc(les.teacher)}</span><span class="chip crash">🎯 ${esc(les.skill)}</span>${stars()[les.id] ? '<span class="chip fin">⭐ Зірку здобуто</span>' : ""}</div>
-        <p class="lead" style="margin:16px auto">${esc(les.intro)}</p>
-        <button class="btn" id="go" type="button">Почати урок ▶</button>
+        ${teacherSay(les.guide, esc(les.intro), "talk", "big")}
+        ${les.art ? `<div class="prize-hint"><img src="${artImg(les.art)}" alt=""><span>Нагорода за урок: <b>${esc((byId(C.artifacts, les.art) || {}).name || "")}</b> оживе!</span></div>` : ""}
+        <button class="btn gold big-go" id="go" type="button">Почати урок ▶</button>
         ${s && readable(s) ? `<p class="hint">За казкою <a href="read.html?id=${s.id}">«${esc(s.title)}»</a></p>` : ""}</div>`;
       $("#go", box).addEventListener("click", play);
     }
     function play() {
-      box.innerHTML = `<div class="play" id="area"></div>`;
+      box.innerHTML = `<div class="play" id="area" data-guide="${les.guide}"></div>`;
       les.run($("#area", box), finish);
     }
     function finish(ok, text) {
@@ -450,9 +492,11 @@
       const all = LESSONS.every((l) => stars()[l.id]);
       const nextL = LESSONS.find((l) => !stars()[l.id]);
       setTimeout(() => {
+        const art = ok && les.art && byId(C.artifacts, les.art);
         box.innerHTML = `<div class="body lesson-intro">
-          <div class="lesson-icon">${ok ? "⭐" : "🌱"}</div><h1>${ok ? "Урок пройдено!" : "Майже вийшло!"}</h1>
-          <p class="lead" style="margin:10px auto">${esc(text)}</p>
+          ${art ? `<div class="prize"><img src="${artImg(les.art, true)}" alt="${esc(art.name)}"><span class="prize-star">⭐</span></div><p class="kicker" style="margin:10px 0 0">Артефакт ожив: ${esc(art.name)}</p>` : `<div class="lesson-icon">${ok ? "⭐" : "🌱"}</div>`}
+          <h1>${ok ? "Урок пройдено!" : "Майже вийшло!"}</h1>
+          ${teacherSay(les.guide, esc(text), ok ? "happy" : "talk", "big")}
           ${ok ? `<div class="moral"><b>Урок:</b> ${esc(les.moral)}</div>` : ""}
           <div class="chips" style="justify-content:center;gap:12px">
             <button class="btn ${ok ? "ghost" : ""}" id="again" type="button">↺ ${ok ? "Ще раз" : "Спробувати знову"}</button>
@@ -482,9 +526,10 @@
     const n = LESSONS.filter((l) => st[l.id]).length;
     const all = n === LESSONS.length;
     const name = store.get("pupil", "");
-    const lessonCard = (l) => `<a class="card lesson-card${st[l.id] ? " done" : ""}" href="lesson.html?id=${l.id}">
-        <div class="body"><div class="lesson-icon">${l.icon}</div><h3>${esc(l.title)}</h3><p>${esc(l.skill)} · ${esc(l.teacher)}</p>
-        <span class="badge">${st[l.id] ? "⭐ Пройдено" : "Почати →"}</span></div></a>`;
+    const lessonCard = (l) => { const b = lessonBanner(l), t = TEACH[l.guide]; return `<a class="card lesson-card${st[l.id] ? " done" : ""}" href="lesson.html?id=${l.id}">
+        ${b ? `<div class="lc-pic"><img src="${b}" alt="" loading="lazy"><span class="lc-ico">${l.icon}</span>${t ? `<img class="lc-teacher${t.still ? " still" : ""}" src="${t.talk}" alt="" loading="lazy">` : ""}</div>` : ""}
+        <div class="body">${b ? "" : `<div class="lesson-icon">${l.icon}</div>`}<h3>${esc(l.title)}</h3><p>${esc(l.skill)} · ${esc(l.teacher)}</p>
+        <span class="badge">${st[l.id] ? "⭐ Пройдено" : "Почати →"}</span></div></a>`; };
     el.innerHTML = `<h2>Зали школи</h2>
       <p class="lead">Школа «ШляхдоМрій» — це шість чарівних зал. У кожній — уроки-ігри. Пройди всі ${LESSONS.length}, збери зірки — і Сова-Всезнайка вручить тобі диплом!</p>
       <div class="star-row" aria-label="Зібрано зірок: ${n} з ${LESSONS.length}">${LESSONS.map((l) => `<span class="${st[l.id] ? "on" : ""}" title="${esc(l.title)}">⭐</span>`).join("")} <b>${n} / ${LESSONS.length}</b></div>
@@ -497,7 +542,7 @@
           <div class="grid lessons-grid">${ls.map(lessonCard).join("")}</div></section>`; }).join("")}</div>
       <div id="diploma" class="diploma-wrap">${all ? `
         <div class="diploma card"><div class="body">
-          <div class="lesson-icon">🎓</div><h2>Диплом</h2>
+          <img class="diploma-founder no-print" src="${TEACH.founder.happy}" alt="Засновник школи"><div class="lesson-icon">🎓</div><h2>Диплом</h2>
           <p>Школа чарівництва «ШляхдоМрій» засвідчує, що</p>
           <input id="pupil" class="pupil" type="text" maxlength="40" placeholder="Твоє ім'я" value="${esc(name)}" aria-label="Ім'я учня">
           <p>пройшов(-ла) всі ${LESSONS.length} уроків у шести залах школи і довів(-ла), що наймогутніша магія — це радість, дружба та доброта.</p>
