@@ -269,7 +269,7 @@
       const aOpen = C.artifacts.filter((a) => a.stories.some((id) => read[id])).length;
 
       main.innerHTML = `
-        <section class="section wrap"><p class="kicker">Скарби</p><h1>Мої скарби</h1>
+        <section class="section wrap" id="stars"><p class="kicker">Скарби</p><h1>Мої скарби</h1>
           <p class="lead">Тут збирається все, що ти здобуваєш у СилаВолії: зірки, значки, картки героїв і друзів, артефакти та секрети. Усе зберігається лише в цьому браузері — без реєстрації.</p>
           <div class="star-total card"><div class="body">
             <div class="st-big">⭐ ${p.total}<small> / ${p.totalMax}</small></div><div class="st-text"><b>Зірки СилаВолії: зібрано ${p.total} з ${p.totalMax}</b>
@@ -286,6 +286,12 @@
           </div>
         </section>
 
+        <nav class="tnav" aria-label="Розділи скарбів"><div class="tnav-in">${[
+          ["stars", "⭐", "Зірки", p.total], ["badges", "🏅", "Значки", got.size], ["cards", "🃏", "Герої", heroOpen ? 3 : 0],
+          ["understood", "🌗", "Зрозуміли", vOpen], ["friends", "💛", "Друзі", fOpen], ["artifacts", "💎", "Артефакти", aOpen],
+          ["crafts", "🛠️", "Витвори", store.get("crafts", []).length], ["secrets", "✨", "Секрети", p.secrets], ["stamps", "🧭", "Печатки", p.stamps],
+        ].map(([id, ic, t, n]) => `<a href="#${id}" data-sec="${id}"><span aria-hidden="true">${ic}</span> ${t}<b>${n}</b></a>`).join("")}</div></nav>
+
         <section class="section wrap" id="badges"><h2>Магічні значки · ${got.size} з ${BADGES.length}</h2>
           <div class="badge-grid">${BADGES.map((b) => `<div class="mbadge${got.has(b.id) ? " on" : ""}" title="${esc(b.desc)}">
             <span class="mb-ico">${got.has(b.id) ? b.icon : "🔒"}</span><b>${esc(b.name)}</b><small>${esc(b.desc)}</small></div>`).join("")}</div>
@@ -299,7 +305,7 @@
             : lockCard({ ...h, stories: ["A01"] })).join("")}</div>
         </section>
 
-        <section class="section wrap"><h2>Ті, кого зрозуміли · ${vOpen} з ${villains.length}</h2>
+        <section class="section wrap" id="understood"><h2>Ті, кого зрозуміли · ${vOpen} з ${villains.length}</h2>
           <p class="lead">Картка відкривається, щойно ти дочитаєш казку, де з'являється цей персонаж.</p>
           <div class="grid tgrid">${villains.map((v) => unlockedBy(v, read)
             ? (v.img
@@ -310,7 +316,7 @@
               : lockCard(v)).join("")}</div>
         </section>
 
-        <section class="section wrap"><h2>Друзі СилаВолії · ${fOpen} з ${friends.length}</h2>
+        <section class="section wrap" id="friends"><h2>Друзі СилаВолії · ${fOpen} з ${friends.length}</h2>
           <div class="grid tgrid">${friends.map((v) => unlockedBy(v, read)
             ? (v.img
               ? `<div class="card tcard friend-card">${friendPic(v)}<div class="body"><h3>${esc(v.name)}</h3><p>${esc(v.who)}</p></div></div>`
@@ -320,9 +326,9 @@
               : lockCard(v)).join("")}</div>
         </section>
 
-        <section class="section wrap"><h2>Чарівні артефакти · ${aOpen} з ${C.artifacts.length}</h2>
+        <section class="section wrap" id="artifacts"><h2>Чарівні артефакти · ${aOpen} з ${C.artifacts.length}</h2>
           <div class="grid art-grid">${C.artifacts.map((a) => {
-            if (a.stories.some((id) => read[id])) return artCard(a);
+            if (a.stories.some((id) => read[id])) return a.img ? `<div class="card art-card art-open">${artImg(a)}<div class="body"><h3>${esc(a.name)}</h3><p>${esc(a.desc)}</p></div></div>` : artCard(a);
             if (!a.img) return lockCard(a);
             const s = firstReadable(a);
             return `<div class="card art-card locked">${artImg(a, "veiled").replace(/alt="[^"]*"/, 'alt="Закрита картка артефакту"')}<span class="art-lock" aria-hidden="true">?</span>
@@ -341,7 +347,7 @@
             : `<div class="card unknown"><div class="body"><div class="secret-big">?</div><h3>Ще не знайдено</h3><p>Підказка: ${esc(s.hint)}.</p></div></div>`).join("")}</div>
         </section>
 
-        <section class="section wrap"><h2>Печатки місць · ${p.stamps} з ${p.stampsMax}</h2>
+        <section class="section wrap" id="stamps"><h2>Печатки місць · ${p.stamps} з ${p.stampsMax}</h2>
           <div class="chips">${LOCS_ON_MAP().map((l) => stamps[l.id]
             ? `<a class="chip crash" href="world.html#${l.id}">${l.map.icon} ${esc(l.name)}</a>`
             : `<a class="chip ghost-chip" href="world.html#${l.id}">🔒 ${esc(l.name)}</a>`).join("")}</div>
@@ -353,6 +359,34 @@
         refreshCounters(); render();
       });
       if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+
+      // швидка навігація: плавний перехід і підсвічування розділу, який зараз на екрані
+      const setHdr = () => { const h = document.querySelector("header.top"); if (h) document.documentElement.style.setProperty("--hdr-h", h.offsetHeight + "px"); };
+      setHdr(); if (!window.__tnavRS) { window.__tnavRS = true; window.addEventListener("resize", setHdr); }
+      const links = [...main.querySelectorAll(".tnav a")];
+      links.forEach((a) => a.addEventListener("click", (e) => {
+        const t = document.getElementById(a.dataset.sec); if (!t) return;
+        e.preventDefault(); t.scrollIntoView({ behavior: "smooth", block: "start" }); history.replaceState(null, "", "#" + a.dataset.sec);
+      }));
+      const mark = (id) => links.forEach((a) => {
+        const on = a.dataset.sec === id; a.classList.toggle("on", on);
+        if (on) { a.setAttribute("aria-current", "true"); const bar = a.parentElement; bar.scrollTo({ left: a.offsetLeft - bar.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" }); } else a.removeAttribute("aria-current");
+      });
+      const secs = links.map((a) => document.getElementById(a.dataset.sec)).filter(Boolean);
+      let cur = "", raf = 0;
+      const spy = () => {
+        raf = 0;
+        const nav = $(".tnav", main); if (!nav || !nav.isConnected) return;
+        const line = nav.getBoundingClientRect().bottom + 24;
+        let id = secs[0].id;
+        for (const t of secs) if (t.getBoundingClientRect().top <= line) id = t.id;
+        if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) id = secs[secs.length - 1].id;   // самий низ сторінки
+        const hdr = document.querySelector("header.top"); if (hdr && nav.getBoundingClientRect().top > hdr.offsetHeight + 2) id = secs[0].id;   // панель ще не прилипла — ми вгорі
+        if (id !== cur) { cur = id; mark(id); }
+      };
+      if (window.__tnavSpy) window.removeEventListener("scroll", window.__tnavSpy);
+      window.__tnavSpy = () => { if (!raf) raf = requestAnimationFrame(spy); };
+      window.addEventListener("scroll", window.__tnavSpy, { passive: true }); spy();
     };
     render();
   }

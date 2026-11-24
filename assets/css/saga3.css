@@ -612,3 +612,23 @@ body.reader.focus .page.first .pic { background: none; }
   .page.first .pic { margin: 0 -16px; }
   .page.first .pic img { border-radius: 0; box-shadow: none; }
 }
+
+/* Скарби: швидка навігація по розділах (липка під шапкою) */
+.tnav { position: sticky; top: var(--hdr-h, 64px); z-index: 20; margin: 0 0 8px; padding: 8px 0;
+  background: rgba(253, 248, 238, .94); border-bottom: 1px solid rgba(103, 70, 161, .15); box-shadow: 0 6px 14px rgba(40, 20, 80, .06); }
+.tnav-in { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tnav-in::-webkit-scrollbar { display: none; }
+.tnav a { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; text-decoration: none; white-space: nowrap;
+  font-weight: 800; font-size: .92rem; color: var(--ink); background: #fff; border: 2px solid rgba(103, 70, 161, .18); transition: background .2s, border-color .2s; }
+.tnav a b { font-size: .78rem; min-width: 22px; text-align: center; padding: 1px 6px; border-radius: 999px; background: #efe7fb; color: #6746A1; }
+.tnav a:hover { border-color: #6746A1; }
+.tnav a.on { background: #6746A1; border-color: #6746A1; color: #fff; }
+.tnav a.on b { background: #ffe066; color: #3a2a00; }
+#stars, #badges, #cards, #understood, #friends, #artifacts, #crafts, #secrets, #stamps { scroll-margin-top: calc(var(--hdr-h, 64px) + 70px); }
+
+/* Скарби: відкрита картка артефакту — світлий фон, назва й опис */
+.art-card.art-open { background: linear-gradient(180deg, #fffaf0 0%, #f4edff 100%); padding: 10px 10px 0; border: 2px solid #f1e3b8; }
+.art-card.art-open .art-img { border-radius: 14px; box-shadow: 0 8px 18px rgba(40, 20, 80, .18); }
+.art-card.art-open .body { background: transparent; padding: 12px 6px 14px; }
+.art-card.art-open .body h3 { margin: 0 0 4px; color: #6746A1; }
+.art-card.art-open .body p { margin: 0; color: var(--muted); font-size: .95rem; }
