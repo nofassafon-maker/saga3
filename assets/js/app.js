@@ -1194,7 +1194,45 @@
           <a class="btn ghost" href="library.html">До бібліотеки</a>
         </div></div>`;
     }
+    /* ---------- перегортання сторінки (3D-аркуш) ---------- */
+    const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let flipEnd = null;
+    function rustle() {
+      if (store.get("mute", false)) return;
+      try {
+        const ac = rustle.ac = rustle.ac || new (window.AudioContext || window.webkitAudioContext)();
+        const len = ac.sampleRate * 0.45, b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0);
+        for (let k = 0; k < len; k++) { const t = k / len; d[k] = (Math.random() * 2 - 1) * Math.sin(Math.PI * t) * (0.6 + 0.4 * Math.sin(t * 40)); }
+        const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+        f.type = "bandpass"; f.frequency.value = 2400; f.Q.value = 0.7; g.gain.value = 0.09;
+        src.buffer = b; src.connect(f); f.connect(g); g.connect(ac.destination); src.start();
+      } catch (e) { /* без звуку */ }
+    }
+    function flip(oldHTML, oldH, dir) {
+      if (flipEnd) flipEnd();
+      const fresh = root.firstElementChild;
+      if (!fresh || calm()) return;
+      fresh.classList.remove("page-enter");
+      const newHTML = root.innerHTML, newH = root.offsetHeight;
+      const fwd = dir > 0;
+      root.classList.add("flipping");
+      root.style.minHeight = Math.max(oldH, newH) + "px";
+      // вперед: під аркушем нова сторінка, аркуш — стара; назад: під аркушем стара, аркуш — нова, що повертається на місце
+      const stage = document.createElement("div");
+      stage.className = "flip-stage" + (fwd ? " fwd" : " back");
+      stage.innerHTML = `${fwd ? "" : `<div class="flip-under">${oldHTML}</div>`}
+        <div class="flip-leaf"><div class="flip-front">${fwd ? oldHTML : newHTML}</div><div class="flip-back"></div></div><div class="flip-shade"></div>`;
+      if (!fwd) fresh.style.visibility = "hidden";
+      root.append(stage);
+      stage.querySelectorAll(".page-enter").forEach((x) => x.classList.remove("page-enter"));
+      stage.querySelectorAll(".page-corner").forEach((x) => x.remove());
+      rustle();
+      const done = () => { clearTimeout(timer); stage.remove(); fresh.style.visibility = ""; root.classList.remove("flipping"); root.style.minHeight = ""; flipEnd = null; };
+      const timer = setTimeout(done, 900);
+      flipEnd = done;
+    }
     function render(dir) {
+      const oldHTML = dir ? root.innerHTML.replace(/<button class="page-corner"[^>]*><\/button>/g, "") : "", oldH = root.offsetHeight;
       stopSpeech();
       const prog = $(".progress i");
       prog.style.width = ((i + 1) / total * 100) + "%";
@@ -1246,6 +1284,9 @@
       store.set("pos:" + s.id, i);
       store.set("last", { id: s.id });
       window.scrollTo({ top: 0 });
+      if (dir && oldHTML) flip(oldHTML, oldH, dir);
+      if (i < total - 1 && !root.querySelector(":scope > .page-corner")) root.insertAdjacentHTML("beforeend", `<button class="page-corner" type="button" aria-label="Наступна сторінка" title="Перегорнути"></button>`);
+      const pc = root.querySelector(":scope > .page-corner"); if (pc) pc.onclick = () => go(1);
     }
     function go(d) {
       const n = Math.max(0, Math.min(total - 1, i + d));
@@ -1257,13 +1298,19 @@
       if (e.key === "ArrowRight" || e.key === "PageDown") go(1);
       if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
     });
-    let x0 = null;
-    root.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    let x0 = null, y0 = null;
+    root.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    root.addEventListener("touchmove", (e) => {
+      if (x0 === null || calm()) return;
+      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0, pg = root.firstElementChild;
+      if (pg && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 12) pg.style.transform = `perspective(1600px) rotateY(${Math.max(-18, Math.min(18, dx / 14))}deg)`, pg.style.transformOrigin = dx < 0 ? "left center" : "right center";
+    }, { passive: true });
     root.addEventListener("touchend", (e) => {
       if (x0 === null) return;
-      const dx = e.changedTouches[0].clientX - x0;
-      if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1);
-      x0 = null;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      const pg = root.firstElementChild; if (pg) { pg.style.transform = ""; pg.style.transformOrigin = ""; }
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
+      x0 = y0 = null;
     });
     function setFs(d) {
       fs = Math.max(1, Math.min(1.8, Math.round((fs + d) * 10) / 10));
