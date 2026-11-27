@@ -337,7 +337,7 @@
         </section>
 
         ${(() => { const cr = store.get("crafts", []); return `<section class="section wrap" id="crafts"><h2>Мої витвори · ${cr.length}</h2>
-          ${cr.length ? `<div class="grid tgrid">${cr.slice().reverse().map((c) => `<div class="card tcard"><div class="body"><div class="craft-ico" style="--hc:${esc(c.color)}">${esc(c.icon)}</div><h3>${esc(c.name)}</h3><p>${esc(c.power)}</p></div></div>`).join("")}</div>`
+          ${cr.length ? `<p class="lead">Натисни на витвір — і Олівець «ФарбоСвіт» намалює йому чарівну ілюстрацію.</p><div class="craft-grid">${cr.map((c, i) => [c, i]).reverse().map(([c, i]) => crafts.card(c, i)).join("")}</div>`
             : `<p class="lead">Тут житимуть артефакти, які ти створиш у <a href="lesson.html?id=workshop">Майстерні Артефактів</a>.</p>`}</section>`; })()}
 
         <section class="section wrap" id="secrets"><h2>Секрети СилаВолії · ${p.secrets} з ${SECRETS.length}</h2>
@@ -353,6 +353,7 @@
             : `<a class="chip ghost-chip" href="world.html#${l.id}">🔒 ${esc(l.name)}</a>`).join("")}</div>
           <p style="margin-top:28px"><button class="btn ghost" id="resetAll" type="button">↺ Почати все спочатку</button></p>
         </section>`;
+      const cg = $("#crafts", main); if (cg) crafts.bind(cg, render);
       $("#resetAll", main).addEventListener("click", () => {
         if (!confirm("Стерти всі зірки, значки, печатки, прочитані казки, знахідки, витвори і щоденник у цьому браузері? Це не можна скасувати.")) return;
         ["secrets", "stamps", "read", "quiz", "stars", "badges", "crafts", "journal"].forEach((k) => store.set(k, ["badges", "crafts", "journal"].includes(k) ? [] : {}));
@@ -1270,7 +1271,130 @@
   }
 
   /* спільні засоби для інших скриптів (lessons.js) */
-  window.SV = { D, C, $, esc, byId, story, readable, store, pages, storyCard, HERO_STYLE, checkBadges, refreshCounters };
+  /* ================= Майстерня Артефактів: витвори в стилі «Royal Fantasy Magic» =================
+     Витвір = форма × колір сяйва × чарівна сила (+ ім'я). Зберігається в sv:crafts (до 12 штук).
+     Малюнки — готова галерея assets/img/crafts/<форма>-<сяйво>.jpg (48 шт., промпти: _source/crafts_gallery/);
+     «Намалювати ілюстрацію» показує анімацію Олівця і відкриває малюнок із галереї. */
+  const crafts = (() => {
+    const SHAPES = [
+      { k: "star", icon: "🌟", n: "Зірка", g: "f", en: "a radiant five-pointed star-burst magical talisman artifact with beveled golden edges and dynamic light rays" },
+      { k: "crystal", icon: "💎", n: "Кристал", g: "m", en: "a faceted levitating crystal prism artifact with intricate golden filigree holders at the top and bottom" },
+      { k: "bell", icon: "🔔", n: "Дзвіночок", g: "m", en: "an ornate enchanted hand-bell artifact with a sculpted golden handle and delicate runic rim" },
+      { k: "key", icon: "🗝️", n: "Ключ", g: "m", en: "an antique filigree magical key artifact with a heart-and-star bow and ornate ward teeth" },
+      { k: "seed", icon: "🌰", n: "Насіння", g: "n", en: "a magical acorn-like enchanted seed artifact cradling a tiny luminous sprout inside a golden calyx" },
+      { k: "tablet", icon: "📜", n: "Скрижаль", g: "f", en: "a smooth rounded ancient magical stone-and-gold tablet artifact with subtle glowing geometric engravings" },
+      { k: "feather", icon: "🪶", n: "Перо", g: "n", en: "an elegant enchanted quill feather artifact with a golden nib and shimmering iridescent vanes" },
+      { k: "shell", icon: "🐚", n: "Мушля", g: "f", en: "a pearlescent spiral seashell artifact with a golden filigree rim and a softly glowing pearl inside" },
+    ];
+    const END = { m: "ий", n: "е", f: "а" };
+    const HUES = [
+      { k: "pink", hex: "#F4A4B8", stem: "рожев", label: "Рожеве сяйво", en: "glowing with soft rose-quartz pink inner luminescence and warm pastel magenta light reflections" },
+      { k: "yellow", hex: "#F6C86E", stem: "золот", label: "Тепле золоте сяйво", en: "glowing with warm sunbeam amber-yellow light and bright honey-gold shimmer" },
+      { k: "mint", hex: "#73C6A8", stem: "м'ятн", label: "М'ятно-смарагдове сяйво", en: "glowing with fresh mint-emerald luminescence and serene seafoam-green crystalline highlights" },
+      { k: "lavender", hex: "#A88FD8", stem: "лавандов", label: "Лавандове сяйво", en: "glowing with dreamy lavender-violet aura and soft amethyst twilight sparkles" },
+      { k: "sky", hex: "#7AB8F5", stem: "небесн", label: "Небесно-блакитне сяйво", en: "glowing with clear sky-blue celestial light and crisp cyan starlight refractions" },
+      { k: "orange", hex: "#E66C2C", stem: "вогнян", label: "Вогняно-помаранчеве сяйво", en: "glowing with vibrant fiery-orange ember light and warm terracotta-gold radiance" },
+    ];
+    const POWERS = [
+      { k: "courage", label: "Дарує сміливість", desc: "Спалахує теплим вогником у долоні, коли треба зробити перший крок назустріч невідомому.", en: "surrounded by tiny dancing golden sparks and protective flame arcs symbolizing inner courage and bold confidence" },
+      { k: "calm", label: "Розганяє сум", desc: "Тихий кришталевий передзвін розвіює хмари втоми та повертає легкість думкам.", en: "releasing gentle soothing light ripples and floating luminous motes that dissolve shadows and bring peaceful relief" },
+      { k: "friendship", label: "Допомагає подружитися", desc: "Відмикає невидимі двері до щирої розмови та допомагає знайти спільну мову навіть із незнайомцем.", en: "entwined with two delicate harmonizing ribbons of warm light symbolizing trust, openness, and friendship" },
+      { k: "insight", label: "Підказує розгадки", desc: "У чарівному світлі проступають приховані підказки — варто лише придивитися спокійним поглядом.", en: "orbited by tiny floating constellations and faint mystical clue-runes hinting at clever discoveries and wisdom" },
+      { k: "joy", label: "Наповнює радістю", desc: "Зберігає всередині іскру літнього ранку, яка проростає усмішкою у найпохмуріший день.", en: "bursting with playful effervescent sparkles and uplifting golden-prism light motes of pure joy" },
+      { k: "warmth", label: "Зігріває серце", desc: "Зберігає пам'ять про найтепліші обійми та нагадує, що ти завжди маєш внутрішню опору.", en: "emitting a cozy, comforting hearth-like aura and soft floating light petals that evoke tenderness and emotional warmth" },
+    ];
+    const autoName = (s, h) => { const a = h.stem + END[s.g]; return `${a[0].toUpperCase() + a.slice(1)} ${s.n}`; };
+    const prompt = (s, h, p) => `3D fairytale magical artifact illustration in the 'Royal Fantasy Magic' style of the Silavolia universe, ${s.en}, ${h.en}, ${p.en}, rich tactile textures, subtle royal gold (#D8B46A) filigree accents, soft volumetric glow, centered composition on a deep twilight indigo (#121024) museum pedestal with faint enchanted stardust, crisp lighting, high detail, no text, no letters, no watermarks`;
+    const make = (si, hi, pi, name) => {
+      const s = SHAPES[si], h = HUES[hi], p = POWERS[pi];
+      return { shape: s.k, hue: h.k, powerKey: p.k, icon: s.icon, color: h.hex, name: (name || "").trim() || autoName(s, h), power: p.label, desc: p.desc, prompt: prompt(s, h, p), at: Date.now() };
+    };
+    // старі витвори (до 2026-11-26) мали лише icon/color/name/power — доповнюємо, що можна
+    const norm = (c) => {
+      const s = SHAPES.find((x) => x.k === c.shape || x.icon === c.icon) || SHAPES[0];
+      const OLD = ["#f3a9b9", "#f6c76d", "#77c9b1", "#a78bd2", "#7fb7e8", "#e8692e"];   // кольори старої Майстерні — у тому ж порядку, що HUES
+      const col = String(c.color || "").toLowerCase();
+      const h = HUES.find((x) => x.k === c.hue || x.hex.toLowerCase() === col) || HUES[OLD.indexOf(col)] || HUES[1];
+      const p = POWERS.find((x) => x.k === c.powerKey || x.label === c.power) || POWERS[4];
+      return { ...c, shape: s.k, hue: h.k, powerKey: p.k, icon: c.icon || s.icon, color: h.hex, power: p.label, desc: c.desc || p.desc, prompt: c.prompt || prompt(s, h, p), painted: !!(c.painted || c.image), _s: s, _h: h };
+    };
+    const list = () => store.get("crafts", []);
+    const save = (arr) => store.set("crafts", arr);
+
+    /* малюнки — готова галерея: assets/img/crafts/<форма>-<сяйво>.jpg (8 × 6 = 48); сила — анімована аура поверх */
+    const gallery = (c) => `assets/img/crafts/${c.shape}-${c.hue}.jpg`;
+    const aura = (c) => `<span class="craft-aura" data-p="${c.powerKey}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>`;
+    const art = (c, cls = "") => `<div class="craft-emblem ${cls}" ${cls.includes("cd-img") ? 'id="cdImg"' : 'aria-hidden="true"'}><span>${esc(c.icon)}</span>${c.painted ? `<img class="craft-img" src="${gallery(c)}" alt="${esc(c.name)}" loading="lazy" onerror="this.remove()">` : ""}${aura(c)}</div>`;
+
+    function card(c0, i) {
+      const c = norm(c0);
+      return `<article class="craft-card" data-i="${i}" style="--glow:${c.color}" tabindex="0" role="button" aria-label="Відкрити витвір: ${esc(c.name)}">
+        ${art(c)}
+        <span class="craft-badge">${esc(c.power)}</span>
+        <h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p></article>`;
+    }
+
+    /* ---------- вікно витвору: перегляд і «Олівець малює» ---------- */
+    function open(i, onChange) {
+      const arr = list(); if (!arr[i]) return;
+      const c = norm(arr[i]);
+      let dlg = document.getElementById("craftDlg");
+      if (!dlg) {
+        dlg = document.createElement("dialog"); dlg.id = "craftDlg"; dlg.className = "craft-dlg"; document.body.append(dlg);
+        dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+      }
+      dlg.style.setProperty("--glow", c.color);
+      dlg.innerHTML = `<div class="cd-box">
+        <button class="cd-x" type="button" aria-label="Закрити">×</button>
+        <div class="cd-top">
+          ${art(c, "cd-img")}
+          <div><h2>${esc(c.name)}</h2>
+            <div class="cd-chips"><span>Форма: ${esc(c._s.n)}</span><span>${esc(c._h.label)}</span><span>Сила: ${esc(c.power)}</span></div>
+            <p class="cd-desc">${esc(c.desc)}</p>
+            <div class="cd-actions">
+              ${c.painted ? `<button class="btn ghost" type="button" id="cdClear">↺ Повернути значок</button>` : `<button class="btn gold" type="button" id="cdGen">🪄 Намалювати ілюстрацію</button>`}
+            </div>
+            <p class="cd-status" id="cdStatus" aria-live="polite"></p></div>
+        </div>
+      </div>`;
+      const $d = (id) => dlg.querySelector("#" + id);
+      const status = (t, kind = "") => { const el = $d("cdStatus"); el.textContent = t; el.className = "cd-status " + kind; };
+      dlg.querySelector(".cd-x").addEventListener("click", () => dlg.close());
+      const gen = $d("cdGen");
+      if (gen) gen.addEventListener("click", async () => {
+        gen.disabled = true; gen.textContent = "🖍️ Олівець малює…"; status("");
+        const src = gallery(c), box = $d("cdImg");
+        const ready = new Promise((ok) => { const im = new Image(); im.onload = () => ok(true); im.onerror = () => ok(false); im.src = src; });
+        box.classList.add("painting");
+        const [has] = await Promise.all([ready, new Promise((r) => setTimeout(r, 2600))]);
+        if (!has) {
+          box.classList.remove("painting"); gen.disabled = false; gen.textContent = "🪄 Намалювати ілюстрацію";
+          return status("Олівець ще вчиться малювати таке поєднання. Зазирни трохи пізніше! ✨", "warn");
+        }
+        box.insertAdjacentHTML("beforeend", `<img class="craft-img reveal" src="${src}" alt="${esc(c.name)}">`);
+        box.append(box.querySelector(".craft-aura"));
+        setTimeout(() => box.classList.remove("painting"), 900);
+        const a = list(); if (a[i]) { a[i] = { ...a[i], painted: true }; delete a[i].image; save(a); }
+        status("Готово! Ілюстрація тепер у картці ✨", "ok");
+        gen.outerHTML = `<button class="btn ghost" type="button" id="cdClear">↺ Повернути значок</button>`;
+        bindClear(); onChange && onChange();
+      });
+      const bindClear = () => { const clr = $d("cdClear"); if (clr) clr.addEventListener("click", () => { const a = list(); if (a[i]) { delete a[i].painted; delete a[i].image; save(a); } onChange && onChange(); open(i, onChange); }); };
+      bindClear();
+      dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+    }
+    // зробити картки витворів у контейнері клікабельними
+    function bind(root, onChange) {
+      root.querySelectorAll(".craft-card[data-i]").forEach((el) => {
+        const go = () => open(+el.dataset.i, onChange);
+        el.addEventListener("click", go);
+        el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+      });
+    }
+    return { SHAPES, HUES, POWERS, autoName, make, norm, list, save, card, open, bind, gallery, prompt };
+  })();
+
+  window.SV = { D, C, $, esc, byId, story, readable, store, pages, storyCard, HERO_STYLE, checkBadges, refreshCounters, crafts };
 
   /* ---------- запуск ---------- */
   document.addEventListener("DOMContentLoaded", () => {

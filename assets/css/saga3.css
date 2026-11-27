@@ -700,3 +700,83 @@ body.reader.focus .page.first .pic { background: none; }
 .lesson .tsay, .lesson .qcard, .lesson .prize-hint { font-style: normal; }
 section.lesson { font-style: normal; }
 #about, #lessons, #diploma, #stories, #math, #games { scroll-margin-top: calc(var(--hdr-h, 64px) + 70px); }
+
+/* ================= Витвори Майстерні: стиль «Royal Fantasy Magic» ================= */
+.craft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+.craft-card { --glow: #D8B46A; display: flex; flex-direction: column; padding: 14px; border-radius: 18px; cursor: pointer; color: #F8F5EC; text-align: left;
+  background: radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--glow) 24%, #121024), #121024 78%);
+  border: 2px solid #D8B46A; box-shadow: 0 8px 24px rgba(18, 16, 36, .45), 0 0 18px color-mix(in srgb, var(--glow) 32%, transparent);
+  transition: transform .2s, box-shadow .2s; font-style: normal; }
+.craft-card:hover, .craft-card:focus-visible { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(18, 16, 36, .55), 0 0 28px color-mix(in srgb, var(--glow) 55%, transparent); outline: none; }
+.craft-img, .craft-emblem { width: 100%; aspect-ratio: 1; border-radius: 12px; border: 1px solid rgba(216, 180, 106, .45); margin-bottom: 12px; display: block; object-fit: cover; background: #0b0918; }
+.craft-emblem { display: grid; place-items: center; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--glow) 55%, transparent) 0%, transparent 46%), radial-gradient(ellipse at 50% 92%, rgba(216, 180, 106, .35) 0 22%, transparent 23%), #0b0918; }
+.craft-emblem::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255, 246, 200, .8) 1px, transparent 1.5px); background-size: 26px 26px; opacity: .35; }
+.craft-emblem span { position: relative; font-size: clamp(3.2rem, 9vw, 4.6rem); filter: drop-shadow(0 0 18px var(--glow)) drop-shadow(0 0 4px #fff6c8); animation: craftFloat 3.2s ease-in-out infinite; }
+@keyframes craftFloat { 50% { transform: translateY(-6px) rotate(-3deg); } }
+.craft-badge { align-self: flex-start; background: #D8B46A; color: #121024; font-size: .75rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+.craft-card h3 { margin: 0 0 6px; font-size: 1.12rem; color: #F5E6C4; }
+.craft-card p { margin: 0; font-size: .88rem; line-height: 1.45; color: #CFC9E2; }
+
+/* вікно витвору */
+.craft-dlg { --glow: #D8B46A; border: 0; padding: 0; background: transparent; width: min(780px, 94vw); max-height: 92vh; }
+.craft-dlg::backdrop { background: rgba(6, 5, 14, .82); }
+.cd-box { position: relative; background: linear-gradient(180deg, #1d193b 0%, #121024 100%); color: #F8F5EC; border: 2px solid #D8B46A; border-radius: 20px; padding: 22px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .75), 0 0 32px color-mix(in srgb, var(--glow) 38%, transparent); max-height: 92vh; overflow-y: auto; }
+.cd-x { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(216, 180, 106, .5); background: rgba(18, 16, 36, .85); color: #F5E6C4; font-size: 1.4rem; cursor: pointer; }
+.cd-top { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+.cd-img { width: 100%; aspect-ratio: 1; border-radius: 14px; border: 1.5px solid #D8B46A; object-fit: cover; background: #0b0918; }
+.cd-top h2 { margin: 0 44px 8px 0; color: #F5E6C4; }
+.cd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.cd-chips span { padding: 4px 10px; border-radius: 8px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(216, 180, 106, .35); font-size: .82rem; }
+.cd-desc { color: #CFC9E2; line-height: 1.5; margin: 0; }
+.cd-prompt { margin: 16px 0 4px; } .cd-prompt summary { cursor: pointer; color: #F5E6C4; font-weight: 700; font-size: .92rem; }
+.cd-prompt textarea { width: 100%; margin-top: 8px; padding: 10px; border-radius: 12px; border: 1px solid rgba(216, 180, 106, .45); background: #0c0a1a; color: #EAE6F8; font: .8rem/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
+.cd-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.cd-box .btn.ghost { background: rgba(216, 180, 106, .14); color: #F5E6C4; border: 1px solid rgba(216, 180, 106, .5); }
+.cd-status { min-height: 1.3em; margin: 10px 0 0; font-weight: 700; font-size: .9rem; } .cd-status.ok { color: #73C6A8; } .cd-status.warn { color: #f5b95b; } .cd-status.err { color: #ff9c8a; }
+.cd-loader { display: flex; align-items: center; gap: 10px; color: #F5E6C4; margin-top: 10px; }
+.cd-spin { width: 18px; height: 18px; border: 2.5px solid rgba(216, 180, 106, .25); border-top-color: #D8B46A; border-radius: 50%; animation: spinStar .8s linear infinite; }
+.cd-result { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: center; margin-top: 14px; padding: 14px; border-radius: 14px; border: 1px dashed rgba(216, 180, 106, .55); background: rgba(11, 9, 24, .7); }
+.cd-result[hidden], .cd-loader[hidden] { display: none; }
+.cd-result img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 1.5px solid #D8B46A; }
+.cd-result p { color: #CFC9E2; margin: 0 0 10px; }
+.cd-note { margin: 14px 0 0; font-size: .78rem; color: #9d96b8; }
+@media (max-width: 640px) { .cd-top, .cd-result { grid-template-columns: 1fr; } .cd-top .cd-img { width: min(240px, 100%); margin: 0 auto; } }
+
+/* урок «Майстерня» у новому стилі */
+.ws-royal { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 22px; align-items: start; }
+.ws-royal .ws-stage .craft-card { cursor: default; } .ws-royal .ws-stage .craft-card:hover { transform: none; }
+.ws-made { width: min(300px, 100%); margin: 6px auto 4px; }
+@media (max-width: 700px) { .ws-royal { grid-template-columns: 1fr; } .ws-royal .ws-stage { width: min(300px, 100%); margin: 0 auto; } }
+/* картинка витвору лежить поверх значка; якщо не завантажиться — видно значок */
+.craft-emblem > .craft-img { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; border: 0; border-radius: inherit; object-fit: cover; z-index: 1; }
+
+/* аура сили поверх малюнка/значка витвору */
+.craft-aura { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.craft-aura i { position: absolute; bottom: -10%; font-style: normal; font-size: 14px; color: var(--glow); text-shadow: 0 0 8px var(--glow), 0 0 2px #fff; opacity: 0; animation: auraRise 4.2s linear infinite; }
+.craft-aura i:nth-child(1) { left: 12%; animation-delay: 0s; } .craft-aura i:nth-child(2) { left: 30%; animation-delay: .7s; font-size: 11px; }
+.craft-aura i:nth-child(3) { left: 50%; animation-delay: 1.4s; } .craft-aura i:nth-child(4) { left: 68%; animation-delay: 2.1s; font-size: 12px; }
+.craft-aura i:nth-child(5) { left: 84%; animation-delay: 2.8s; } .craft-aura i:nth-child(6) { left: 40%; animation-delay: 3.5s; font-size: 10px; }
+@keyframes auraRise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: .95; } 80% { opacity: .7; } 100% { transform: translateY(-115%) scale(1.15) rotate(25deg); opacity: 0; } }
+.craft-aura[data-p="courage"] i::before { content: "✦"; } .craft-aura[data-p="courage"] i { color: #ffb36b; }
+.craft-aura[data-p="calm"] i::before { content: "◌"; } .craft-aura[data-p="calm"] i { animation-name: auraFloat; }
+.craft-aura[data-p="friendship"] i::before { content: "❤"; } .craft-aura[data-p="friendship"] i { color: #ffb3c7; }
+.craft-aura[data-p="insight"] i::before { content: "✧"; } .craft-aura[data-p="insight"] i { color: #cfe6ff; animation-name: auraTwinkle; bottom: auto; top: calc(10% + var(--y, 0%)); }
+.craft-aura[data-p="insight"] i:nth-child(2n) { --y: 50%; } .craft-aura[data-p="insight"] i:nth-child(3n) { --y: 25%; }
+.craft-aura[data-p="joy"] i::before { content: "✺"; } .craft-aura[data-p="joy"] i { color: #ffe27a; animation-duration: 3s; }
+.craft-aura[data-p="warmth"] i::before { content: "❀"; } .craft-aura[data-p="warmth"] i { color: #e9c8ff; animation-duration: 5.2s; }
+@keyframes auraFloat { 0% { transform: translateY(0) scale(.5); opacity: 0; } 20% { opacity: .8; } 100% { transform: translateY(-90%) scale(2.2); opacity: 0; } }
+@keyframes auraTwinkle { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1.3) rotate(45deg); } }
+@media (prefers-reduced-motion: reduce) { .craft-aura i { animation: none; opacity: .5; bottom: 12%; } }
+
+/* «Олівець малює»: олівець ходить по полотну, потім малюнок проявляється */
+.craft-emblem.painting::after { content: "🖍️"; position: absolute; z-index: 3; font-size: 2.6rem; left: 15%; top: 20%; filter: drop-shadow(0 0 10px #fff6c8); animation: pencilDraw 2.6s ease-in-out infinite; }
+.craft-emblem.painting > span { animation: craftFloat .6s ease-in-out infinite; filter: drop-shadow(0 0 30px var(--glow)) drop-shadow(0 0 10px #fff); }
+@keyframes pencilDraw { 0% { left: 15%; top: 20%; } 25% { left: 65%; top: 30%; } 50% { left: 25%; top: 55%; } 75% { left: 70%; top: 70%; } 100% { left: 15%; top: 20%; } }
+.craft-img.reveal { animation: paintReveal 1.4s ease-out both; }
+@keyframes paintReveal { from { clip-path: circle(0% at 50% 50%); filter: brightness(2) saturate(.2); } to { clip-path: circle(75% at 50% 50%); filter: none; } }
+.cd-top .cd-actions { margin-top: 16px; }
+.craft-aura i { font-size: 20px; text-shadow: 0 0 10px var(--glow), 0 0 4px #fff, 0 0 2px #fff; }
+.craft-aura i:nth-child(2) { font-size: 15px; } .craft-aura i:nth-child(4) { font-size: 17px; } .craft-aura i:nth-child(6) { font-size: 14px; }
+.cd-img .craft-aura i { font-size: 26px; } .cd-img .craft-aura i:nth-child(2n) { font-size: 19px; }

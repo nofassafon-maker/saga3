@@ -374,47 +374,49 @@
     },
   });
 
-  /* 10. Майстерня Артефактів — створи власний чарівний предмет */
-  const FORMS = [["💎", "Кристал", "m"], ["🔔", "Дзвіночок", "m"], ["🗝️", "Ключ", "m"], ["🪶", "Перо", "n"], ["🐚", "Мушля", "f"], ["🌟", "Зірка", "f"]];
-  const END = { m: "ий", n: "е", f: "а" };
-  const HUES = [["#F3A9B9", "рожев"], ["#F6C76D", "золот"], ["#77C9B1", "м'ятн"], ["#A78BD2", "лавандов"], ["#7fb7e8", "небесн"], ["#e8692e", "вогнян"]];
-  const POWERS = ["Дарує сміливість", "Розганяє сум", "Допомагає подружитися", "Підказує розгадки", "Наповнює радістю", "Зігріває серце"];
+  /* 10. Майстерня Артефактів — створи власний чарівний предмет (стиль «Royal Fantasy Magic», SV.crafts) */
   L({
     id: "workshop", guide: "fin", art: "farbosvit", page: 1, icon: "🎨", title: "Майстерня Артефактів", teacher: "Фін і Олівець «ФарбоСвіт»", story: "B06",
     skill: "Творчість",
-    intro: "Олівець «ФарбоСвіт» втілює не бажання, а почуття. Обери форму, колір і чарівну силу — і дай своєму артефакту ім'я. Він житиме в «Моїх скарбах».",
+    intro: "Олівець «ФарбоСвіт» втілює не бажання, а почуття. Обери форму, колір сяйва і чарівну силу, дай артефакту ім'я — а потім Олівець намалює йому справжню чарівну ілюстрацію! Він житиме в «Моїх скарбах».",
     moral: "Творчість — це відповідальність за те, як твої мрії вплинуть на інших.",
     run(area, done) {
-      let f = 0, h = 0, p = 0;
-      area.innerHTML = `<div class="workshop">
-        <div class="ws-preview" id="pv"><span class="ws-ico" id="pi"></span><b id="pn"></b><small id="pp"></small></div>
+      const K = SV.crafts;
+      let f = 0, h = 1, p = 0, touched = false;
+      area.innerHTML = `<div class="workshop ws-royal">
+        <div class="ws-stage"><div id="pv"></div><p class="hint" style="text-align:center">Так виглядатиме твоя картка</p></div>
         <div class="ws-controls">
-          <p class="ws-label">Форма</p><div class="ws-row" id="wf">${FORMS.map(([e, n], k) => `<button type="button" class="ws-opt" data-k="${k}" aria-label="${n}">${e}</button>`).join("")}</div>
-          <p class="ws-label">Колір сяйва</p><div class="ws-row" id="wh">${HUES.map(([c, n], k) => `<button type="button" class="ws-opt ws-color" data-k="${k}" style="--hc:${c}" aria-label="колір: ${n}ий"></button>`).join("")}</div>
-          <p class="ws-label">Чарівна сила</p><div class="ws-row" id="wp">${POWERS.map((t, k) => `<button type="button" class="ws-opt ws-text" data-k="${k}">${t}</button>`).join("")}</div>
-          <label class="ws-label" for="wn">Ім'я артефакту</label><input id="wn" maxlength="40" autocomplete="off">
-          <p style="margin-top:14px"><button class="btn" id="ws" type="button">✨ Створити артефакт</button></p>
+          <p class="ws-label">1. Форма</p><div class="ws-row" id="wf">${K.SHAPES.map((x, k) => `<button type="button" class="ws-opt" data-k="${k}" aria-label="${x.n}" title="${x.n}">${x.icon}</button>`).join("")}</div>
+          <p class="ws-label">2. Колір сяйва</p><div class="ws-row" id="wh">${K.HUES.map((x, k) => `<button type="button" class="ws-opt ws-color" data-k="${k}" style="--hc:${x.hex}" aria-label="${x.label}" title="${x.label}"></button>`).join("")}</div>
+          <p class="ws-label">3. Чарівна сила</p><div class="ws-row" id="wp">${K.POWERS.map((x, k) => `<button type="button" class="ws-opt ws-text" data-k="${k}">${x.label}</button>`).join("")}</div>
+          <label class="ws-label" for="wn">4. Ім'я артефакту</label><input id="wn" maxlength="40" autocomplete="off">
+          <p style="margin-top:14px"><button class="btn gold" id="ws" type="button">✨ Створити артефакт</button></p>
         </div></div>`;
       const nm = $("#wn", area);
-      const auto = () => `${HUES[h][1][0].toUpperCase() + HUES[h][1].slice(1) + END[FORMS[f][2]]} ${FORMS[f][1]}`;
-      let touched = false;
       function draw() {
         area.querySelectorAll("#wf .ws-opt").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.k === f)));
         area.querySelectorAll("#wh .ws-opt").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.k === h)));
         area.querySelectorAll("#wp .ws-opt").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.k === p)));
-        if (!touched) nm.value = auto();
-        $("#pv", area).style.setProperty("--hc", HUES[h][0]);
-        $("#pi", area).textContent = FORMS[f][0];
-        $("#pn", area).textContent = nm.value.trim() || auto();
-        $("#pp", area).textContent = POWERS[p];
+        if (!touched) nm.value = K.autoName(K.SHAPES[f], K.HUES[h]);
+        $("#pv", area).innerHTML = K.card(K.make(f, h, p, nm.value), -1);
       }
       const bind = (sel, set) => area.querySelectorAll(sel + " .ws-opt").forEach((b) => b.addEventListener("click", () => { set(+b.dataset.k); sfx.note(+b.dataset.k); draw(); }));
       bind("#wf", (k) => (f = k)); bind("#wh", (k) => (h = k)); bind("#wp", (k) => (p = k));
       nm.addEventListener("input", () => { touched = true; draw(); });
       $("#ws", area).addEventListener("click", () => {
-        const item = { icon: FORMS[f][0], color: HUES[h][0], name: nm.value.trim() || auto(), power: POWERS[p], at: Date.now() };
-        store.set("crafts", store.get("crafts", []).concat([item]).slice(-12));
-        done(true, `«${item.name}» створено! ${item.power} — і тепер живе у твоїх скарбах.`);
+        const item = K.make(f, h, p, nm.value);
+        const all = K.list().concat([item]).slice(-12);
+        K.save(all); sfx.win();
+        const idx = all.length - 1;
+        // створено: показуємо картку й пропонуємо намалювати ілюстрацію
+        area.innerHTML = `<div class="ws-done">
+          ${teacherSay("fin", `«${esc(item.name)}» створено! ${esc(item.power)}. Тепер Олівець «ФарбоСвіт» може намалювати йому справжню ілюстрацію — натисни на картку!`, "happy", "big")}
+          <div class="ws-made" id="made">${K.card(item, idx)}</div>
+          <p class="qnext"><button class="btn gold" id="paint" type="button">🪄 Намалювати ілюстрацію</button><button class="btn" id="fin" type="button">Завершити урок ⭐</button></p></div>`;
+        const refresh = () => { const a = K.list(); $("#made", area).innerHTML = K.card(a[idx], idx); K.bind($("#made", area), refresh); };
+        K.bind($("#made", area), refresh);
+        $("#paint", area).addEventListener("click", () => K.open(idx, refresh));
+        $("#fin", area).addEventListener("click", () => done(true, `«${item.name}» живе у твоїх скарбах. ${item.desc}`));
       });
       draw();
     },
