@@ -490,7 +490,7 @@
       les.run($("#area", box), finish);
     }
     function finish(ok, text) {
-      if (ok) { giveStar(les.id); sfx.win(); }
+      if (ok) { giveStar(les.id); sfx.win(); if (SV.burst) SV.burst({ emojis: [les.icon, "⭐"], confetti: true, count: 64 }); }
       const all = LESSONS.every((l) => stars()[l.id]);
       const nextL = LESSONS.find((l) => !stars()[l.id]);
       setTimeout(() => {

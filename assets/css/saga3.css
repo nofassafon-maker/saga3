@@ -780,3 +780,6 @@ section.lesson { font-style: normal; }
 .craft-aura i { font-size: 20px; text-shadow: 0 0 10px var(--glow), 0 0 4px #fff, 0 0 2px #fff; }
 .craft-aura i:nth-child(2) { font-size: 15px; } .craft-aura i:nth-child(4) { font-size: 17px; } .craft-aura i:nth-child(6) { font-size: 14px; }
 .cd-img .craft-aura i { font-size: 26px; } .cd-img .craft-aura i:nth-child(2n) { font-size: 19px; }
+
+/* святковий салют (конфеті/емодзі) поверх усього */
+.burst-cv { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; }

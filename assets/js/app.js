@@ -224,6 +224,49 @@
     document.querySelectorAll("[data-sc]").forEach((x) => { x.textContent = t; });
   }
 
+  /* святковий салют: конфеті та/або емодзі (власний легкий canvas, без бібліотек; поважає «менше руху»)
+     burst({ emojis: ["⭐"], confetti: true, count: 60, x: 0.5, y: 0.6 }) — x, y частки екрана, звідки летить */
+  const BURST_COLORS = ["#6746A1", "#ffd23f", "#f3a9b9", "#77c9b1", "#7fb7e8", "#e8692e", "#ffffff"];
+  let burstCv = null, burstParts = [], burstRaf = 0;
+  function burst(o = {}) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!burstCv) {
+      burstCv = document.createElement("canvas"); burstCv.className = "burst-cv"; burstCv.setAttribute("aria-hidden", "true");
+      document.body.append(burstCv);
+    }
+    // модальне вікно (dialog) лежить у верхньому шарі — малюємо всередині нього, інакше салют сховається під ним
+    const host = [...document.querySelectorAll("dialog[open]")].pop() || document.body;
+    if (burstCv.parentElement !== host) host.append(burstCv);
+    const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+    burstCv.width = W * dpr; burstCv.height = H * dpr;
+    const ox = (o.x ?? 0.5) * W, oy = (o.y ?? 0.62) * H;
+    const em = o.emojis || [], n = o.count || (em.length ? 26 : 70);
+    for (let k = 0; k < n; k++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * (o.spread || 1.9), v = 7 + Math.random() * 9;
+      const isEmoji = em.length && (!o.confetti || k % 2 === 0);
+      burstParts.push({ x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.3,
+        life: 0, max: 90 + Math.random() * 50, e: isEmoji ? em[k % em.length] : "", c: BURST_COLORS[k % BURST_COLORS.length],
+        w: 6 + Math.random() * 6, h: 4 + Math.random() * 5, size: (o.size || 30) * (0.75 + Math.random() * 0.5) });
+    }
+    if (!burstRaf) burstRaf = requestAnimationFrame(burstFrame);
+  }
+  function burstFrame() {
+    const ctx = burstCv.getContext("2d"), dpr = burstCv.width / innerWidth;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
+    burstParts = burstParts.filter((q) => q.life < q.max);
+    for (const q of burstParts) {
+      q.life++; q.vy += 0.28; q.vx *= 0.985; q.vy *= 0.985; q.x += q.vx; q.y += q.vy; q.r += q.vr;
+      ctx.globalAlpha = Math.max(0, 1 - Math.max(0, q.life - q.max * 0.65) / (q.max * 0.35));
+      ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.r);
+      if (q.e) { ctx.font = `${q.size}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(q.e, 0, 0); }
+      else { ctx.fillStyle = q.c; ctx.fillRect(-q.w / 2, -q.h / 2, q.w, q.h); }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    if (burstParts.length) burstRaf = requestAnimationFrame(burstFrame);
+    else { burstRaf = 0; ctx.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+
   /* сповіщення про новий значок (після того, як закриється вікно-нагорода) */
   function checkBadges() {
     const seen = store.get("badges", null);
@@ -244,6 +287,7 @@
     t.innerHTML = `<span class="bt-ico">${b.icon}</span><span><small>Новий значок!</small><b>${esc(b.name)}</b></span>`;
     document.body.append(t);
     requestAnimationFrame(() => t.classList.add("in"));
+    burst({ emojis: [b.icon, "⭐"], confetti: true, count: 46, y: 0.85 });
     setTimeout(() => { t.classList.remove("in"); setTimeout(() => t.remove(), 500); }, 4200);
   }
 
@@ -712,6 +756,7 @@
         if (on) { img.dataset.src = img.getAttribute("src"); img.dataset.srcset = img.getAttribute("srcset") || ""; img.dataset.sizes = img.getAttribute("sizes") || ""; img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = `${card.dataset.gif}`; }
         else { if (img.dataset.sizes) img.setAttribute("sizes", img.dataset.sizes); if (img.dataset.srcset) img.setAttribute("srcset", img.dataset.srcset); img.src = img.dataset.src; }
         card.classList.toggle("alive", on); card.setAttribute("aria-pressed", String(on));
+        if (on) { const r = card.getBoundingClientRect(); burst({ emojis: ["✨", "💫", "⭐"], count: 22, size: 24, x: (r.left + r.width / 2) / innerWidth, y: (r.top + r.height / 2) / innerHeight }); }
       };
       card.addEventListener("click", toggle);
       card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(e); } });
@@ -756,6 +801,7 @@
         return;
       }
       store.set("mapAlive", !store.get("mapAlive", false));
+      if (store.get("mapAlive", false)) burst({ emojis: ["🌈", "✨", "🗺️", "💎"], confetti: true, count: 70, y: 0.4 });
       intro();
       if (store.get("mapAlive", false)) $(".map-wrap", main).scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
@@ -904,6 +950,7 @@
       <div class="chips" style="justify-content:center;gap:10px">${link ? `<a class="btn gold" href="${link[0]}">${esc(link[1])}</a>` : ""}<button class="btn ${link ? "ghost" : "gold"}" value="close">${link ? "Шукати далі" : "Чудово!"}</button></div>
     </form>`;
     dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+    if (kicker !== "Чарівний кристал" && kicker !== "Чарівна зірочка") burst({ emojis: [icon, "✨", "⭐"], count: 34, y: 0.55 });
   }
 
   pages.library = function (main) {
@@ -1088,6 +1135,7 @@
         return;
       }
       store.set("schoolAlive", !store.get("schoolAlive", false)); syncSchool();
+      if (store.get("schoolAlive", false)) burst({ emojis: ["🔔", "⭐", "📚", "✨"], confetti: true, count: 70, y: 0.4 });
     });
     syncSchool();
   };
@@ -1163,6 +1211,7 @@
               `${SCHOOL_BOOKS().length} з ${SCHOOL_BOOKS().length} казок`, ["school.html", "До школи"]), 900);
         }
         root.innerHTML = endPage();
+        burst({ confetti: true, emojis: ["📖", "⭐"], count: 60 });
         $("#again").addEventListener("click", () => go(-i));
         root.querySelectorAll(".end-opts .answer").forEach((b) => b.addEventListener("click", () => {
           const ok = b.textContent === s.lesson;
@@ -1172,6 +1221,7 @@
             const q = store.get("quiz", {}); q[s.id] = Date.now(); store.set("quiz", q);
             $(".end-task", root).classList.add("solved");
             fb.textContent = "⭐ Правильно! Завдання виконано.";
+            burst({ emojis: ["⭐", "🦉", "💛"], count: 28, y: 0.7 });
             checkBadges();
           } else {
             b.disabled = true; b.classList.add("wrong");
@@ -1372,6 +1422,7 @@
           return status("Олівець ще вчиться малювати таке поєднання. Зазирни трохи пізніше! ✨", "warn");
         }
         box.insertAdjacentHTML("beforeend", `<img class="craft-img reveal" src="${src}" alt="${esc(c.name)}">`);
+        burst({ emojis: [{ courage: "🔥", calm: "🫧", friendship: "💞", insight: "🔮", joy: "🌟", warmth: "🌸" }[c.powerKey] || "✨", c.icon, "✨"], count: 30, y: 0.45 });
         box.append(box.querySelector(".craft-aura"));
         setTimeout(() => box.classList.remove("painting"), 900);
         const a = list(); if (a[i]) { a[i] = { ...a[i], painted: true }; delete a[i].image; save(a); }
@@ -1394,7 +1445,7 @@
     return { SHAPES, HUES, POWERS, autoName, make, norm, list, save, card, open, bind, gallery, prompt };
   })();
 
-  window.SV = { D, C, $, esc, byId, story, readable, store, pages, storyCard, HERO_STYLE, checkBadges, refreshCounters, crafts };
+  window.SV = { D, C, $, esc, byId, story, readable, store, pages, storyCard, HERO_STYLE, checkBadges, refreshCounters, crafts, burst };
 
   /* ---------- запуск ---------- */
   document.addEventListener("DOMContentLoaded", () => {
