@@ -38,8 +38,28 @@
     const open = a.stories.some((id) => store.get("read", {})[id]), gif = open && a.img && ART_GIF.has(a.id);
     const chips = `<div class="chips">${a.stories.map(storyLink).join("")}</div>`;
     if (!a.img) return artCard(a, chips);
-    return `<div class="card art-card${open ? " open" : ""}${gif ? " has-gif" : ""}"${gif ? ` data-gif="${a.img}.gif" tabindex="0" role="button" aria-pressed="false" aria-label="Оживити артефакт: ${esc(a.name)}"` : ""}>
+    return `<div class="card art-card art-view-card${open ? " open" : ""}${gif ? " has-gif" : ""}" data-art="${a.id}" tabindex="0" role="button" aria-label="Переглянути артефакт: ${esc(a.name)}">
       ${artImg(a)}${gif ? '<span class="art-play" aria-hidden="true">✨</span>' : ""}<div class="body">${chips}</div></div>`;
+  }
+  /* перегляд артефакту: велике зображення; відкритий у Скарбниці — оживає анімацією */
+  function viewArt(a) {
+    const read = store.get("read", {}), open = a.stories.some((id) => read[id]), gif = open && ART_GIF.has(a.id);
+    const first = a.stories.map(story).find((x) => x && readable(x));
+    let dlg = document.getElementById("artView");
+    if (!dlg) {
+      dlg = document.createElement("dialog"); dlg.id = "artView"; dlg.className = "art-view"; document.body.append(dlg);
+      dlg.addEventListener("click", (ev) => { if (ev.target === dlg) dlg.close(); });
+    }
+    dlg.innerHTML = `<div class="av-box${open ? " open" : ""}">
+      <button class="av-x" type="button" aria-label="Закрити">×</button>
+      <div class="av-pic"><img src="${a.img}${gif ? ".gif" : ".jpg"}" alt="${esc(a.name)}: ${esc(a.desc)}"></div>
+      <div class="av-text"><h2>${esc(a.name)}</h2><p>${esc(a.desc)}</p>
+        <p class="av-state">${open ? "✨ Відкрито у Скарбниці — артефакт ожив!" : first ? `🔒 Прочитай «<a href="read.html?id=${first.id}">${esc(first.title)}</a>» — і артефакт оживе у твоїй Скарбниці.` : "🔒 Відкриється згодом."}</p>
+        <div class="chips">${a.stories.map(storyLink).join("")}</div></div>
+    </div>`;
+    dlg.querySelector(".av-x").addEventListener("click", () => dlg.close());
+    dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+    if (gif) burst({ emojis: ["✨", "💫", "⭐"], count: 26, size: 26, y: 0.45 });
   }
 
   /* «до / після»: перетворення персонажа (assets/img/villains/<id>-before|-after) */
@@ -743,23 +763,16 @@
       </section>
       <section class="scene-view" id="scene" hidden></section>
       <section class="section wrap" id="artifacts"><h2>Чарівні артефакти</h2>
-        <p class="lead">Картки, які вже відкрито у Скарбниці, світяться. Натисни на таку картку — і артефакт оживе!</p>
+        <p class="lead">Натисни на картку, щоб роздивитися артефакт. Картки, які вже відкрито у Скарбниці, світяться — і в перегляді оживають!</p>
         <div class="grid art-grid art-grid-sm">${C.artifacts.map(worldArtCard).join("")}</div></section>`;
 
     const panel = $("#panel", main), scene = $("#scene", main), mapView = $("#mapView", main);
-    // артефакти: відкриті у Скарбниці світяться й оживають (GIF) від натискання
-    main.querySelectorAll(".art-card.has-gif").forEach((card) => {
-      const img = $(".art-img", card), name = card.getAttribute("aria-label");
-      const toggle = (e) => {
-        if (e.target.closest("a")) return;
-        const on = !card.classList.contains("alive");
-        if (on) { img.dataset.src = img.getAttribute("src"); img.dataset.srcset = img.getAttribute("srcset") || ""; img.dataset.sizes = img.getAttribute("sizes") || ""; img.removeAttribute("srcset"); img.removeAttribute("sizes"); img.src = `${card.dataset.gif}`; }
-        else { if (img.dataset.sizes) img.setAttribute("sizes", img.dataset.sizes); if (img.dataset.srcset) img.setAttribute("srcset", img.dataset.srcset); img.src = img.dataset.src; }
-        card.classList.toggle("alive", on); card.setAttribute("aria-pressed", String(on));
-        if (on) { const r = card.getBoundingClientRect(); burst({ emojis: ["✨", "💫", "⭐"], count: 22, size: 24, x: (r.left + r.width / 2) / innerWidth, y: (r.top + r.height / 2) / innerHeight }); }
-      };
-      card.addEventListener("click", toggle);
-      card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(e); } });
+    // артефакти: натискання відкриває перегляд (відкриті у Скарбниці — оживають у ньому)
+    main.querySelectorAll(".art-view-card").forEach((card) => {
+      const a = byId(C.artifacts, card.dataset.art); if (!a) return;
+      const go = (e) => { if (e.target.closest("a")) return; viewArt(a); };
+      card.addEventListener("click", go);
+      card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(e); } });
     });
     // на телефоні карта ширша за екран: починаємо з центру
     requestAnimationFrame(() => { const w = $(".map-full .map-wrap", main); if (w && w.scrollWidth > w.clientWidth) w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2; });

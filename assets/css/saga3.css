@@ -826,3 +826,86 @@ body.reader.focus .page-corner { background: linear-gradient(225deg, transparent
 #book.flipping .page-corner { visibility: hidden; }
 @media (max-width: 640px) { .page-corner { width: 46px; height: 46px; right: 12px; bottom: 92px; } }
 @media (prefers-reduced-motion: reduce) { .page-corner { animation: none; } }
+
+/* уроки: запитання — великим шрифтом, щоб привертати увагу */
+.lesson .question { font-size: clamp(1.45rem, 3.4vw, 2rem); line-height: 1.35; font-weight: 800; color: var(--ink);
+  background: linear-gradient(180deg, #fffaf0, #f4edff); border: 2px solid #f1e3b8; border-radius: 20px; padding: 16px 20px; margin: 12px auto 18px;
+  box-shadow: 0 6px 16px rgba(40, 20, 80, .08); max-width: 760px; }
+.lesson .question b { color: var(--magic); }
+.lesson .answer { font-size: clamp(1.05rem, 2.4vw, 1.2rem); }
+.lesson .stone-wrap + #qa .question, .lesson .journal .question { animation: tsayIn .35s ease-out; }
+@media (max-width: 560px) { .lesson .question { padding: 12px 14px; } }
+
+/* Майстерня на телефоні: картка-заготовка компактна — значок ліворуч, текст праворуч */
+@media (max-width: 700px) {
+  .ws-royal .ws-stage { width: 100%; }
+  .ws-royal .ws-stage .craft-card { display: grid; grid-template-columns: 92px 1fr; column-gap: 12px; row-gap: 4px; align-items: start; padding: 10px; }
+  .ws-royal .ws-stage .craft-emblem { grid-row: 1 / span 3; width: 92px; margin: 0; }
+  .ws-royal .ws-stage .craft-emblem span { font-size: 2.6rem; }
+  .ws-royal .ws-stage .craft-aura i { font-size: 13px; }
+  .ws-royal .ws-stage .craft-badge { margin: 0; font-size: .7rem; }
+  .ws-royal .ws-stage .craft-card h3 { font-size: 1rem; margin: 0; }
+  .ws-royal .ws-stage .craft-card p { font-size: .8rem; line-height: 1.35; }
+  .ws-royal .ws-stage .hint { margin: 6px 0 0; font-size: .8rem; }
+}
+
+/* мобільна шапка «СилаВолія» — мінімальна: один низький рядок */
+@media (max-width: 760px) {
+  .top .wrap { flex-wrap: nowrap; min-height: 48px; gap: 8px; padding-top: 2px; padding-bottom: 2px; }
+  .top::after { height: 3px; }
+  .brand { gap: 6px; min-width: 0; }
+  .brand img { height: 30px; }
+  .brand span { font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-mini { gap: 4px; flex-shrink: 0; }
+  .top-mini a { min-height: 36px; padding: 4px 10px; font-size: .9rem; }
+}
+@media (max-width: 340px) { .brand span { display: none; } }
+
+/* «Світ» → Чарівні артефакти: картки на 30% більші, натискання відкриває перегляд */
+.art-grid.art-grid-sm { grid-template-columns: repeat(auto-fill, minmax(143px, 1fr)); gap: 16px; }
+.art-grid-sm .art-card .chip { font-size: .78rem; }
+.art-grid-sm .art-view-card { cursor: pointer; transition: transform .2s, box-shadow .2s; }
+.art-grid-sm .art-view-card:hover { transform: translateY(-3px); }
+.art-grid-sm .art-view-card:focus-visible { outline: 3px solid var(--magic); outline-offset: 3px; }
+.art-view { border: 0; padding: 0; background: transparent; width: min(820px, 94vw); max-height: 94vh; }
+.art-view::backdrop { background: rgba(28, 18, 51, .82); }
+.av-box { position: relative; display: grid; grid-template-columns: minmax(240px, 380px) 1fr; gap: 22px; align-items: center; padding: 20px;
+  background: linear-gradient(180deg, #fffaf0, #f4edff); border: 2px solid #f1e3b8; border-radius: 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, .45); max-height: 94vh; overflow-y: auto; }
+.av-box.open { border-color: #ffe066; box-shadow: 0 0 0 3px rgba(255, 224, 102, .6), 0 20px 60px rgba(0, 0, 0, .45); }
+.av-pic { border-radius: 16px; overflow: hidden; aspect-ratio: 692 / 840; background: #1c1233; box-shadow: 0 10px 30px rgba(40, 20, 80, .3); }
+.av-pic img { width: 100%; height: 100%; object-fit: cover; display: block; animation: prizeIn .5s cubic-bezier(.3, 1.4, .5, 1); }
+.av-text h2 { margin: 0 40px 8px 0; color: var(--magic); }
+.av-text p { margin: 0 0 12px; line-height: 1.5; }
+.av-state { font-weight: 800; color: var(--ink); background: #fff; border-radius: 12px; padding: 8px 12px; }
+.av-box.open .av-state { background: #fff7d6; }
+.av-x { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(103, 70, 161, .12); color: var(--magic); font-size: 1.5rem; cursor: pointer; z-index: 2; }
+@media (max-width: 640px) {
+  .av-box { grid-template-columns: 1fr; gap: 14px; padding: 14px; }
+  .av-pic { width: min(300px, 100%); margin: 0 auto; }
+}
+
+/* ================= Читалка: аркуш на весь екран ================= */
+/* поля книжки — змінні, щоб і аркуш-перегортання стояв точно на сторінці */
+#book.book { --bx: 16px; --by: 18px; padding: var(--by) var(--bx) 120px; }
+.flip-stage { top: var(--by, 18px); left: var(--bx, 16px); right: var(--bx, 16px); }
+@media (min-width: 761px) and (min-height: 560px) {
+  #book.book { --bx: 20px; --by: 12px; max-width: 1560px; padding-bottom: 88px; }
+  /* розворот: ілюстрація ліворуч на всю висоту, текстовий аркуш праворуч на всю висоту */
+  #book .page.has-img.has-text { height: calc(100vh - 152px); height: calc(100dvh - 152px); grid-template-columns: auto minmax(0, 1fr); align-items: stretch; gap: 18px; }
+  #book .page.has-img.has-text .pic { height: 100%; display: flex; align-items: center; justify-content: center; padding: 10px; min-width: 0; }
+  #book .page.has-img.has-text .pic img { height: 100%; width: auto; max-height: none; max-width: 56vw; object-fit: contain; }
+  #book .page.has-img.has-text .txt { height: 100%; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; padding: 28px clamp(28px, 4vw, 56px); }
+  #book .page.text-only .txt { max-width: 980px; min-height: calc(100dvh - 152px); display: flex; flex-direction: column; justify-content: center; padding: 32px clamp(28px, 5vw, 64px); }
+  #book .page.has-img:not(.has-text):not(.first) .pic img { max-height: calc(100dvh - 172px); }
+}
+@media (max-width: 760px) {
+  #book.book { --bx: 8px; --by: 10px; }
+  #book .page { gap: 12px; }
+  #book .page .pic { padding: 6px; }
+  #book .page .pic img { max-height: 52vh; }
+  #book .page .txt { padding: 16px 18px; }
+  .page.first .pic { margin: 0 -8px; }
+}
+@media (min-width: 1100px) and (min-height: 560px) {
+  #book .page.has-img.has-text .txt, #book .page.text-only .txt { font-size: calc(var(--fs, 1.2rem) * 1.22); line-height: 1.7; }
+}
